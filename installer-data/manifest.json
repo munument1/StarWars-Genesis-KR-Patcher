@@ -556,18 +556,18 @@
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs003_en.ilstrings",
       "kind": "text_recipe",
-      "blob": "1c934d9355d2e2ba4d6d1914b1e39d701c0cdd559b6cb52bd78f10f5389c1c32",
+      "blob": "35b211618cdde04f0a0b6d0ce7fdcfac652b43b3ed57e1eeb4dbd12f72d1e282",
       "input_sha256": "158e19f84074ac5b470dc7993d7c1f35cab63ac72c01059c438d5b3f9f8a371a",
-      "output_sha256": "a1448fa92f6d6d77407ad8d3960af142094f32214b7ee4d94ceee65655e127a0",
-      "text_changes": 1692
+      "output_sha256": "6fa8d72d82b95b39b1bc28b414d9a390c03fd5f43fc00fe88aa3d0c2c810c3e7",
+      "text_changes": 1734
     },
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs003_en.strings",
       "kind": "text_recipe",
-      "blob": "d89de30b114846f42d7a313d0705f7117e94f764a1e06d2729e9ad70670c20c7",
+      "blob": "3583b9909e859eb904c6326fdb5d77bb0562101a1c86e12ad8fbe63cbb605313",
       "input_sha256": "1a99c141e6aa55472878af00e2eea9729803683674d131b749366d60276e6b4b",
-      "output_sha256": "af8b4f392afae1543cc9cae608b88ab48ba47c6bfb4e31ff5fe4502dc45777e5",
-      "text_changes": 1414
+      "output_sha256": "0341a64a914a5a1ac261e121658d641418fc35e080b2467a27fc368225bd661f",
+      "text_changes": 1415
     },
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs004_en.dlstrings",
@@ -758,18 +758,18 @@
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/starfield_en.ilstrings",
       "kind": "text_recipe",
-      "blob": "66a3981a202c0e7b063078f9a0d8ad6625b82fd6cbdb0d01e8fb202d1eee6067",
+      "blob": "6991729a678dd9a75932589253defefa0d49026e87ddeb01edf4e85887713726",
       "input_sha256": "1ab3afcadf5218715619810e9cbee91f52c7b216ffc333b34dc1e8e26cf1fc04",
-      "output_sha256": "bcc6a6c439b550dd18f1d74f86013cf6c5b5f5eee133763ce713e92bde9f85f2",
-      "text_changes": 129444
+      "output_sha256": "4c977ccd48e9c0220b870a1226f1380f9b758d4efff6aa4e142429d71e626136",
+      "text_changes": 129755
     },
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/starfield_en.strings",
       "kind": "text_recipe",
-      "blob": "58d33e05c3fc747d7e2fe5e12f32ed27c626e34e5c3787034000ad22cd4621fc",
+      "blob": "85b262f0c8a4fc873632e228dc144f3a562c9e45abedb32ab8be9df4b8c846e9",
       "input_sha256": "f1298cec2617515e84479ea4175a8920072e6fe306262ebb6630f62060aa04bb",
-      "output_sha256": "b74399253487779311557f1f0297c5b5a62ff830e97c723b42617ae7845eada1",
-      "text_changes": 46203
+      "output_sha256": "9356e97075e6356b2448e2e4be4b479d454bde3a3e1934d08c79640bd1c28d54",
+      "text_changes": 46354
     },
     {
       "target": "mods/Star Wars - Nar Shaddaa/NarShaddaaCity.esm",
