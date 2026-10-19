@@ -4,7 +4,7 @@ on:
   release:
     types: [published]
   workflow_run:
-    workflows: ['Replace verified v0.2.3 assets']
+    workflows: ['Build verified v0.2.4 assets']
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -61,6 +61,10 @@ jobs:
               core.setFailed('Expected a numeric version tag such as v1.2.3.');
               return;
             }
+            if (release.tag_name !== 'v0.2.4') {
+              core.notice('This workflow publishes only the Genesis 8.8.4 patcher v0.2.4.');
+              return;
+            }
             const assetName = `GenesisKRPatcher-${release.tag_name}.zip`;
             const checksumsName = `SHA256SUMS-${release.tag_name}.txt`;
             const asset = release.assets.find(a => a.name === assetName);
@@ -84,7 +88,7 @@ jobs:
             core.setOutput('tag', release.tag_name);
             core.setOutput('asset', assetName);
             core.setOutput('checksums', checksumsName);
-            core.setOutput('version', '8.8.32-KR' + release.tag_name.replace(/^v/, ''));
+            core.setOutput('version', '8.8.4-KR' + release.tag_name.replace(/^v/, ''));
             core.setOutput('url', release.html_url);
 
       - name: Download release assets

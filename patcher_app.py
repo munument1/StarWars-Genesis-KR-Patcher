@@ -1,24 +1,33 @@
-"""Windows UI for the local Genesis Korean patcher test build."""
+"""Windows UI for the Star Wars Genesis Korean patcher."""
 import argparse,json,os,queue,sys,threading,uuid
 from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog,messagebox,ttk
 from installer_backend import generate,apply,restore,sha,safe
 
+PATCHER_VERSION='0.2.4'
+GENESIS_VERSION='8.8.4'
+
 def package_dir():
     return Path(getattr(sys,'_MEIPASS',Path(__file__).parent))/'installer-data'
+
+def check_release_metadata():
+    manifest=json.loads((package_dir()/'manifest.json').read_text(encoding='utf-8'))
+    if manifest.get('target_version')!=GENESIS_VERSION or manifest.get('version')!=PATCHER_VERSION:
+        raise ValueError('Package version does not match this patcher release')
+    return manifest
 
 class App:
     def __init__(self,root):
         self.root=root;self.events=queue.Queue();self.stage=None;self.busy=False
-        root.title('Star Wars Genesis 한글 패처 · v0.2.3 정식판');root.geometry('780x560');root.minsize(700,500)
+        root.title(f'Star Wars Genesis 한글 패처 · v{PATCHER_VERSION}');root.geometry('780x560');root.minsize(700,500)
         root.protocol('WM_DELETE_WINDOW',self.close)
         style=ttk.Style();style.theme_use('clam')
         self.game=tk.StringVar();self.state=tk.StringVar(value='Genesis의 Game 폴더를 선택해 주세요.')
         frame=ttk.Frame(root,padding=20);frame.pack(fill='both',expand=True)
         ttk.Label(frame,text='STAR WARS GENESIS  ·  한국어 패치',font=('맑은 고딕',17,'bold')).pack(anchor='w')
-        ttk.Label(frame,text='8.8.32용 v0.2.3 정식판 · 영문 괄호 병기 정리 + 캐릭터 배경 존댓말 · Pretendard 한글 폰트',wraplength=720).pack(anchor='w',pady=(8,5))
-        ttk.Label(frame,text='AI·Codex 번역 검토와 메뉴·한글 폰트·행성 이름 HUD 출력 확인을 반영했습니다. 전체 퀘스트 검증은 진행 전입니다.',wraplength=720).pack(anchor='w',pady=(0,16))
+        ttk.Label(frame,text=f'Genesis {GENESIS_VERSION}용 v{PATCHER_VERSION} · 한국어 번역 · Pretendard 한글 폰트 · HUD 표시 보정',wraplength=720).pack(anchor='w',pady=(8,5))
+        ttk.Label(frame,text='설치한 Genesis 버전과 모드 파일을 확인한 뒤 패치를 생성합니다. 전체 퀘스트와 대사의 실제 플레이 검증은 완료되지 않았습니다.',wraplength=720).pack(anchor='w',pady=(0,16))
         row=ttk.Frame(frame);row.pack(fill='x')
         self.entry=ttk.Entry(row,textvariable=self.game);self.entry.pack(side='left',fill='x',expand=True)
         self.browse=ttk.Button(row,text='폴더 선택',command=self.choose);self.browse.pack(side='right',padx=(8,0))
@@ -51,7 +60,10 @@ class App:
         if not self.game.get():return
         game=self.game.get();base=Path(os.environ.get('LOCALAPPDATA',Path.home()))/'GenesisKRPatcher'/'staging'
         self.stage=base/uuid.uuid4().hex;self.state.set('파일 검사 및 패치 생성 중…')
-        self.run('prepare',lambda:generate(game,package_dir(),self.stage,progress=self.progress))
+        def prepare_package():
+            check_release_metadata()
+            return generate(game,package_dir(),self.stage,progress=self.progress)
+        self.run('prepare',prepare_package)
     def install(self):
         if self.stage is None:return
         self.state.set('백업 및 적용 중…')
@@ -90,12 +102,13 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--self-check');parser.add_argument('--generate-only',nargs=2,metavar=('GAME','STAGE'))
     args=parser.parse_args()
     if args.self_check:
-        package=package_dir();manifest=json.loads((package/'manifest.json').read_text(encoding='utf-8'))
+        package=package_dir();manifest=check_release_metadata()
         for r in manifest['operations']:
             for blob_id in [r['blob']]+[entry['blob'] for entry in r.get('upgrade_from',[])]:
                 if sha(safe(package,'blobs/'+blob_id).read_bytes())!=blob_id:raise ValueError('Embedded data corrupted')
-        Path(args.self_check).write_text(json.dumps({'operations':len(manifest['operations']),'embedded_payload_verified':True,'release_state':manifest['release_state']}),encoding='utf-8');return
+        Path(args.self_check).write_text(json.dumps({'operations':len(manifest['operations']),'embedded_payload_verified':True,'release_state':manifest['release_state'],'target_version':manifest['target_version'],'version':manifest['version']}),encoding='utf-8');return
     if args.generate_only:
+        check_release_metadata()
         generate(args.generate_only[0],package_dir(),args.generate_only[1]);return
     root=tk.Tk();App(root);root.mainloop()
 if __name__=='__main__':main()
