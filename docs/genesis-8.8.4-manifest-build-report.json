@@ -1,0 +1,225 @@
+{
+  "stats": {
+    "reused_unchanged": 127,
+    "rebuilt_esms": 22,
+    "removed_absent_esm": 3,
+    "rebuilt_strings": 6,
+    "kept_optional_fallback": 26,
+    "rebuilt_hud_dictionary": 1,
+    "added_new_esm": 3
+  },
+  "total_operations": 185,
+  "text_changes": 244975,
+  "report": [
+    {
+      "target": "mods/Star Wars Genesis - Patch Compendium/EnhancedLightsandFX.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 59,
+      "bytes": 7346277
+    },
+    {
+      "target": "mods/Star Wars - Prop Replacement Pack/StarWarsPropReplacement.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 522,
+      "bytes": 714832
+    },
+    {
+      "target": "mods/Star Wars Genesis - Patch Compendium/SW Spacer Overhaul.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 82,
+      "bytes": 133718
+    },
+    {
+      "target": "mods/Star Wars - Realistic Blasters and Melee Patch/RealisticStarWarsBlasters.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 1425,
+      "bytes": 697260
+    },
+    {
+      "target": "mods/Star Wars Genesis - Patch Compendium/Tatooine.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 714,
+      "bytes": 7900190
+    },
+    {
+      "target": "mods/Star Wars Genesis - Planets/StarWarsGenesisPlanets.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 118,
+      "bytes": 12177408
+    },
+    {
+      "target": "mods/Star Wars Genesis - Patch Compendium/FugitiveHideout.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 355,
+      "bytes": 9108541
+    },
+    {
+      "target": "mods/Star Wars Genesis - Override Patch/Shadow Collective.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 98,
+      "bytes": 202340
+    },
+    {
+      "target": "mods/Star Wars Genesis - Patch Compendium/RVNomadCave.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 7,
+      "bytes": 750349
+    },
+    {
+      "target": "mods/Star Wars Genesis - Patch Compendium/AssassinDroidBountyHunterGuild.esm",
+      "status": "removed_absent_8_8_4"
+    },
+    {
+      "target": "mods/Star Wars Genesis - Patch Compendium/MandalorianForge.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 97,
+      "bytes": 89653
+    },
+    {
+      "target": "mods/Star Wars Genesis - Patch Compendium/StarWarsGenesisArmorCompendium.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 1242,
+      "bytes": 4900797
+    },
+    {
+      "target": "mods/Star Wars Genesis - Patch Compendium/StarWarsFactionExpansion.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 254,
+      "bytes": 1778902
+    },
+    {
+      "target": "mods/Star Wars - Force Power Replacer/ForcePowers.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 220,
+      "bytes": 76461
+    },
+    {
+      "target": "mods/Star Wars Genesis - Override Patch/SithTrooper.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 212,
+      "bytes": 355937
+    },
+    {
+      "target": "mods/Star Wars Genesis - Lightsabers/StarWarsGenesisLightsabers.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 339,
+      "bytes": 1207925
+    },
+    {
+      "target": "mods/Star Wars Genesis - New Yuuzhan Vong Main Story/Yuuzhan_Vong.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 694,
+      "bytes": 2329531
+    },
+    {
+      "target": "mods/Star Wars - Rebel Alliance Storyline/StarWarsRebelQuestline.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 204,
+      "bytes": 1229726
+    },
+    {
+      "target": "mods/Star Wars Genesis - Side Quests/StarWarsGenesisSideQuests.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 740,
+      "bytes": 1406617
+    },
+    {
+      "target": "mods/Star Wars Genesis - Override Patch/StarWarsGenesisOverridePatch.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 2338,
+      "bytes": 2785746
+    },
+    {
+      "target": "mods/Star Wars Genesis - Planets/StarWarsGenesisGalaxyPatcher.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 129,
+      "bytes": 101839
+    },
+    {
+      "target": "mods/Star Wars Genesis - Patch Compendium/GenesisBountyBoard.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 119,
+      "bytes": 398116
+    },
+    {
+      "target": "mods/Star Wars - Mandalorian Forge Ruins/BeskarFragmentOnBountyKill.esm",
+      "status": "removed_absent_8_8_4"
+    },
+    {
+      "target": "mods/Star Wars Genesis - Override Patch/StarWarsMapMarkers.esm",
+      "status": "rebuilt_plugin",
+      "translated_fields": 30,
+      "bytes": 1124923
+    },
+    {
+      "target": "mods/Star Wars Genesis - Small Master Patches/BountyHuntersGuildNPCOutfitsPatch.esm",
+      "status": "removed_absent_8_8_4"
+    },
+    {
+      "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs003_en.dlstrings",
+      "status": "rebuilt_strings",
+      "preserved_translations": 194,
+      "source_changed_needs_review": 11,
+      "new_ids_needing_review": 3
+    },
+    {
+      "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs003_en.ilstrings",
+      "status": "rebuilt_strings",
+      "preserved_translations": 1241,
+      "source_changed_needs_review": 493,
+      "new_ids_needing_review": 2
+    },
+    {
+      "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs003_en.strings",
+      "status": "rebuilt_strings",
+      "preserved_translations": 1401,
+      "source_changed_needs_review": 13,
+      "new_ids_needing_review": 36
+    },
+    {
+      "target": "mods/Star Wars - Name Replacement Overhaul/strings/starfield_en.dlstrings",
+      "status": "rebuilt_strings",
+      "preserved_translations": 8228,
+      "source_changed_needs_review": 20,
+      "new_ids_needing_review": 164
+    },
+    {
+      "target": "mods/Star Wars - Name Replacement Overhaul/strings/starfield_en.ilstrings",
+      "status": "rebuilt_strings",
+      "preserved_translations": 129221,
+      "source_changed_needs_review": 396,
+      "new_ids_needing_review": 659
+    },
+    {
+      "target": "mods/Star Wars - Name Replacement Overhaul/strings/starfield_en.strings",
+      "status": "rebuilt_strings",
+      "preserved_translations": 46042,
+      "source_changed_needs_review": 75,
+      "new_ids_needing_review": 2843
+    },
+    {
+      "target": "mods/Star Wars Genesis - HUD Pack/interface/translate_en.txt",
+      "status": "rebuilt_hud_text",
+      "updated_bytes": 185702,
+      "translated_or_upgraded_rows": 3016,
+      "unmatched_english_keys": 0,
+      "preserved_new_8_8_4_value": 0,
+      "ambiguous_old_keys": 0
+    },
+    {
+      "target": "mods/Star Wars Genesis - Bounty Hunters' Guild/CaijVanda.esm",
+      "status": "added_new_plugin",
+      "translated_fields": 8
+    },
+    {
+      "target": "mods/Star Wars Genesis - Bounty Hunters' Guild/StarWarsGenesisBountyHunterGuild.esm",
+      "status": "added_new_plugin",
+      "translated_fields": 179
+    },
+    {
+      "target": "mods/Star Wars Genesis - Bounty Hunters' Guild/TheTrackersAllianceDelayed.esm",
+      "status": "added_new_plugin",
+      "translated_fields": 15
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "operations": 183,
+  "strings_reused_from_existing_unique": 295,
+  "strings_held_due_to_control_structure": 0,
+  "blobs": 233,
+  "changes": [
+    {
+      "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs003_en.ilstrings",
+      "reused_unique_existing": 59,
+      "held_due_to_control_structure": 0,
+      "all_translated": 1300
+    },
+    {
+      "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs003_en.strings",
+      "reused_unique_existing": 12,
+      "held_due_to_control_structure": 0,
+      "all_translated": 1413
+    },
+    {
+      "target": "mods/Star Wars - Name Replacement Overhaul/strings/starfield_en.dlstrings",
+      "reused_unique_existing": 1,
+      "held_due_to_control_structure": 0,
+      "all_translated": 8229
+    },
+    {
+      "target": "mods/Star Wars - Name Replacement Overhaul/strings/starfield_en.ilstrings",
+      "reused_unique_existing": 62,
+      "held_due_to_control_structure": 0,
+      "all_translated": 129283
+    },
+    {
+      "target": "mods/Star Wars - Name Replacement Overhaul/strings/starfield_en.strings",
+      "reused_unique_existing": 161,
+      "held_due_to_control_structure": 0,
+      "all_translated": 46203
+    }
+  ],
+  "removed_shadowed_paths": [
+    "mods/npcs - mysterious tracker to caij vanda w blaster/caijvanda.esm",
+    "mods/the trackers alliance delayed start/thetrackersalliancedelayed.esm"
+  ],
+  "missing_translation_count": 3713,
+  "ambiguous_translation_count": 78,
+  "strings_new_dialogue_and_journal_translations": 629,
+  "missing_translation_count_before_new_strings": 4342,
+  "strings_review_held_candidates": 200
+}

@@ -1,16 +1,16 @@
 # Star Wars Genesis 한국어 패처
 
-**Star Wars Genesis 8.8.32용 Windows 한국어 패처 v0.2.3 정식판**입니다.
-기존 8.8.1 SST 번역과 추가 번역 검토 결과를 반영하며, 사용자의 플러그인에서
+**Star Wars Genesis 8.8.4용 Windows 한국어 패처 v0.2.4**입니다.
+기존 SST 번역과 추가 번역 검토 결과를 반영하며, 사용자의 플러그인에서
 번역된 파일을 생성한 다음 백업하고 적용합니다. Python, Java, xTranslator,
 Gemini API 키를 별도로 설치하거나 입력할 필요가 없습니다.
 
-최신 배포판은 **v0.2.3 정식판**입니다. 추가 영문 병기 14곳을 정리하고, 영어 외 언어 병기 4곳을 복구했습니다. 스페인어 등 외국어 원문과 요약·설명 병기는 유지합니다. [정식판 반영 내역](translation-review/v0.2.3-release/README.md)을 확인하세요. [괄호 병기·캐릭터 배경 검수](translation-review/parentheses-backgrounds/README.md)에서 영문 중복 병기 226곳과 배경 설명 존댓말 5곳을 추가 반영했습니다. 기존 용어 수정 983곳에 더해 전체 용어 검수 결과 1,365곳을 반영하고, 모드 ESM의 `오픈` 상호작용 18곳을 `열기`로 수정했습니다. [전체 용어 검수·상호작용 수정](docs/terminology-complete-patch.md)과 [기존 한패 활용](docs/donor-reuse.md)을 확인하세요. 전체 퀘스트와 대사의 실제 플레이 검증은 완료되지 않았습니다.
+v0.2.4는 Genesis 8.8.4에 대응하는 버전입니다. 이전 8.8.32용 v0.2.3의 [괄호 병기·캐릭터 배경 검수](translation-review/v0.2.3-release/README.md), [용어 검수·상호작용 수정](docs/terminology-complete-patch.md), [기존 한패 활용](docs/donor-reuse.md)을 바탕으로 합니다. 전체 퀘스트와 대사의 실제 플레이 검증은 완료되지 않았습니다.
 
 ## 다운로드와 설치
 
-1. [v0.2.3 정식판](https://github.com/munument1/-KR-StarWars-Genesis-Patcher/releases/tag/v0.2.3)에서
-   `GenesisKRPatcher-v0.2.3.zip`을 내려받고 압축을 풉니다.
+1. 이전 [v0.2.4-rc.1 시험판](https://github.com/munument1/StarWars-Genesis-KR-Patcher/releases/tag/v0.2.4-rc.1)은 **최신 번역 505건이 들어 있지 않은 이전 작업본**입니다.
+   현재 브랜치의 신규 8.8.4 Strings 번역이 실제 인게임에서 검수된 뒤 후속 버전을 별도로 공개하겠습니다. 지금 RC1을 정식판으로 설치하는 것은 권장하지 않습니다.
 2. 실행 중인 Starfield를 완전히 종료합니다.
 3. `GenesisKRPatcher.exe`를 실행해 제네시스의 **Game 폴더**를 선택합니다.
    `mods`, `profiles`, `ModOrganizer.ini`가 들어 있는 폴더입니다.
@@ -20,20 +20,27 @@ Gemini API 키를 별도로 설치하거나 입력할 필요가 없습니다.
 6. MO2에서 `Star Wars Genesis Compiler` 프로필로 SFSE를 실행합니다.
    Starfield 언어는 영어를 사용합니다. 처음 실행 시 화면이 뜨기까지 시간이 걸릴 수 있습니다.
 
-이전 v0.2.3 시험판을 포함한 기존 패치 적용자는 동일한 절차로 갱신할 수 있습니다. 이미 적용된 파일은 건너뜁니다.
+기존 패치 사용자는 8.8.4용 릴리즈의 지원 입력 목록에 포함된 파일만 갱신할 수 있습니다. 이미 같은 출력으로 적용된 파일은 건너뜁니다.
 설치 버전이나 모드 우선순위, 원본 파일이 지원 대상과 다르면 적용을 중단합니다.
 없는 선택 DLC의 추가 Strings는 건너뜁니다.
 
 ## 적용 범위
 
-- 140개 플러그인과 13개 Genesis Strings 파일, 총 248,199개 텍스트 변경 위치.
-- 추가 초안 및 보류 항목 6,371건의 AI·Codex 검토 반영.
-- HUD UI 사전의 문구 키 3,051개 유지, 3,013개 값 변경.
-  제네시스가 따로 바꾼 문구 65개는 스타워즈 설정과 안내를 유지해서 번역했습니다.
+- 플러그인, Genesis Strings, HUD 인터페이스의 한국어 번역 및 기존 용어 검수 반영.
 - UI 및 대화창에 Pretendard 한글 글리프 추가. 기존 영문 및 컨트롤러 글리프 유지.
 - 원형 HUD 행성 이름의 한글 잘림 보정: 글자 칸 18픽셀, 간격 13도, 크기 11.
-- Genesis에서 제공하지 않는 기존 사용자 한패 Strings 26개.
+- Genesis에서 제공하지 않는 기존 사용자 한패 Strings의 보완 적용.
 - `GENESIS_DOCUMENTS.bat` 한국어 안내. 최고 그래픽은 정확히 `MAX`를 입력해야 선택됩니다.
+
+### Genesis 8.8.4 Strings 추가 문구 검토 상태
+
+8.8.32에서 8.8.4로 변경된 Strings 6개를 비교했을 때 신규 ID 3,707건, 기존 원문 변경 1,008건이 확인됐습니다.
+기존 SST·번역 레시피에서 동일 영어 원문으로 검증 가능한 295건은 재사용하고,
+현상금 길드 대사·퀘스트 일지 629건 및 추가 표시 후보 505건을 신규 번역해 **총 1,429개 위치**에 한국어 대응을 확보했습니다.
+나머지 3,286건은 빈 문자열 640, 런타임 변수/태그 261, 기술용 식별자 1,511, 구조 재검증 후 원문 유지로 판정한 874건입니다.
+원문 불일치 때문에 잘못된 구번역을 강제 적용하지 않습니다. 따라서 8.8.4 대응은 **완역을 의미하지 않습니다.**
+874건은 `FACT`·`FLST` 등의 내부·콘솔용 이름과 숫자·원소 기호, 표시 참조 미확인 기술 문자열입니다. **이번에는 추가 번역하지 않고 그대로 보존합니다.** 자세한 수치와 보류 기준은 [8.8.4 Strings 번역 반영·검수 상태](docs/genesis-8.8.4-strings-status.md)를 참고하세요.
+전체 인게임 표시를 확인하기 전에는 릴리즈 후보(`release_candidate_pending_8.8.4_gameplay_qa`)로 유지합니다.
 
 패처의 적용 대상은 **제네시스 `mods` 폴더와 Game 폴더의 BAT**입니다.
 Steam 본편 `Starfield/Data`는 버전 확인을 위해 읽기만 하며 수정하지 않습니다.
@@ -48,14 +55,13 @@ Steam 본편 `Starfield/Data`는 버전 확인을 위해 읽기만 하며 수정
 
 ## 확인한 범위
 
-사용자가 실제 게임에서 메뉴 번역, 한글 폰트 출력, 원형 HUD의 행성 이름 표시를
-확인했습니다. 패치 엔진 및 설치/복원 단위 테스트 14개를 통과했고, 플러그인 및
-Strings 파일 153개를 독립 파서로 검증했습니다. EXE의 내장 파일 검사와 패치 생성도
-검증했습니다.
+이전 8.8.32용 v0.2.3에서 메뉴 번역, 한글 폰트 출력, 원형 HUD의 행성 이름 표시를
+게임에서 확인했습니다. 8.8.4용 빌드는 별도 검증 대상이며, 검사 완료 여부는
+릴리즈에 게시되는 테스트 및 패키지 검증 결과를 기준으로 판단해 주세요.
 
 전체 퀘스트와 대사를 플레이 검증한 릴리즈는 아닙니다. 기존 SST 전체의 사람 교열,
 xTranslator와의 완전한 출력 대조, 모든 PEX 및 SWF 내부 문구 검토는 완료되지 않았습니다.
-게임 내 오역이나 잘림은 [Issues](https://github.com/munument1/-KR-StarWars-Genesis-Patcher/issues)에
+게임 내 오역이나 잘림은 [Issues](https://github.com/munument1/StarWars-Genesis-KR-Patcher/issues)에
 스크린샷과 해당 위치를 알려주세요.
 
 ## 소스 실행 및 빌드
@@ -64,7 +70,7 @@ Python 3.14에서 확인했습니다. 소스 실행에는 표준 라이브러리
 
 ```powershell
 python patcher_app.py
-python -m unittest test_patch_engine test_installer_backend
+python -m unittest test_patch_engine test_installer_backend test_patcher_app
 python -m pip install -r requirements-build.txt
 python -m PyInstaller --noconfirm --onefile --windowed --name GenesisKRPatcher --add-data "installer-data;installer-data" patcher_app.py
 ```
