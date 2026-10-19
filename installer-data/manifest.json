@@ -548,26 +548,26 @@
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs003_en.dlstrings",
       "kind": "text_recipe",
-      "blob": "a484624459189974ce4cced3548fcdebc02cf23eddcf978048ca67498663b817",
+      "blob": "1895ec365a7fec15230101f5a940adf9b6c9eb09ecbd8f30c9dfe6cacc83af9d",
       "input_sha256": "2228c6026f1bf50ec10be5d9c652622d4e5a634f3917b49e2be7e70f5dfded7e",
-      "output_sha256": "bcc5c680bdcb323358cf4688571511a0c9246f720b4f1c7c93b549d8985ebd61",
-      "text_changes": 194
+      "output_sha256": "ac84c85f1b0c6009b86289b57c1e84b6d996c783943b54df0853e71f0c10d6c8",
+      "text_changes": 205
     },
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs003_en.ilstrings",
       "kind": "text_recipe",
-      "blob": "7a6bccca5d63e9d29c8c876298c885f58f3cb110c40022453592e02478260b70",
+      "blob": "1c934d9355d2e2ba4d6d1914b1e39d701c0cdd559b6cb52bd78f10f5389c1c32",
       "input_sha256": "158e19f84074ac5b470dc7993d7c1f35cab63ac72c01059c438d5b3f9f8a371a",
-      "output_sha256": "95d5e2b08b0ab7c08bca996a5dbf50ab81435515ef0f10a1aaea498aef13e760",
-      "text_changes": 1300
+      "output_sha256": "a1448fa92f6d6d77407ad8d3960af142094f32214b7ee4d94ceee65655e127a0",
+      "text_changes": 1692
     },
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs003_en.strings",
       "kind": "text_recipe",
-      "blob": "72f6d2a11a0df82635e973680221f2a2be690b43f35a408a7ee303fc8e31bbb6",
+      "blob": "d89de30b114846f42d7a313d0705f7117e94f764a1e06d2729e9ad70670c20c7",
       "input_sha256": "1a99c141e6aa55472878af00e2eea9729803683674d131b749366d60276e6b4b",
-      "output_sha256": "9d3a4d8e6a7f621a089e420038ba221629f0deb23a85c7a6c7e2b514d9845057",
-      "text_changes": 1413
+      "output_sha256": "af8b4f392afae1543cc9cae608b88ab48ba47c6bfb4e31ff5fe4502dc45777e5",
+      "text_changes": 1414
     },
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/sfbgs004_en.dlstrings",
@@ -750,18 +750,18 @@
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/starfield_en.dlstrings",
       "kind": "text_recipe",
-      "blob": "9bfd868b275cb393def7e77b552a9bedfa16a18f80901cfc1305f8ab0967b553",
+      "blob": "e4aa6d510bedde2f8dfa2b4245df0a9cb15209a405e0f961adec00f9bc4b6bc0",
       "input_sha256": "1728bbba3e03ef1c5bf29a0c99df1aa7175a3d36615d4c0144bbf7d03d25cd37",
-      "output_sha256": "3072f85ad3077524adf6d3a118ae7dee1be6f0858c447841b8a843d11586f3e9",
-      "text_changes": 8229
+      "output_sha256": "274c981e28fdac02a8c2175c8fef4e06c8c74ceb69591aeb5a0d36f767468dd7",
+      "text_changes": 8293
     },
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/starfield_en.ilstrings",
       "kind": "text_recipe",
-      "blob": "4417cfd13d74c8df780aaf577f019f3f83bd8c55e80d7af84fd166679fd53027",
+      "blob": "66a3981a202c0e7b063078f9a0d8ad6625b82fd6cbdb0d01e8fb202d1eee6067",
       "input_sha256": "1ab3afcadf5218715619810e9cbee91f52c7b216ffc333b34dc1e8e26cf1fc04",
-      "output_sha256": "9f650b5164d79b3cea57fb61be7523871526ae162414888bfe6066780e0f4708",
-      "text_changes": 129283
+      "output_sha256": "bcc6a6c439b550dd18f1d74f86013cf6c5b5f5eee133763ce713e92bde9f85f2",
+      "text_changes": 129444
     },
     {
       "target": "mods/Star Wars - Name Replacement Overhaul/strings/starfield_en.strings",

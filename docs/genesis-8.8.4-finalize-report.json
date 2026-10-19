@@ -39,6 +39,9 @@
     "mods/npcs - mysterious tracker to caij vanda w blaster/caijvanda.esm",
     "mods/the trackers alliance delayed start/thetrackersalliancedelayed.esm"
   ],
-  "missing_translation_count": 4342,
-  "ambiguous_translation_count": 78
+  "missing_translation_count": 3713,
+  "ambiguous_translation_count": 78,
+  "strings_new_dialogue_and_journal_translations": 629,
+  "missing_translation_count_before_new_strings": 4342,
+  "strings_review_held_candidates": 200
 }

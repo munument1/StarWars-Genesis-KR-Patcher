@@ -106,7 +106,7 @@ def main():
         for r in manifest['operations']:
             for blob_id in [r['blob']]+[entry['blob'] for entry in r.get('upgrade_from',[])]:
                 if sha(safe(package,'blobs/'+blob_id).read_bytes())!=blob_id:raise ValueError('Embedded data corrupted')
-        Path(args.self_check).write_text(json.dumps({'operations':len(manifest['operations']),'embedded_payload_verified':True,'release_state':manifest['release_state'],'target_version':manifest['target_version'],'version':manifest['version']}),encoding='utf-8');return
+        Path(args.self_check).write_text(json.dumps({'operations':len(manifest['operations']),'embedded_payload_verified':True,'manifest_sha256':sha((package/'manifest.json').read_bytes()),'release_state':manifest['release_state'],'target_version':manifest['target_version'],'version':manifest['version']}),encoding='utf-8');return
     if args.generate_only:
         check_release_metadata()
         generate(args.generate_only[0],package_dir(),args.generate_only[1]);return
