@@ -9,8 +9,7 @@ v0.2.4는 Genesis 8.8.4에 대응하는 버전입니다. 이전 8.8.32용 v0.2.3
 
 ## 다운로드와 설치
 
-1. 이전 [v0.2.4-rc.1 시험판](https://github.com/munument1/StarWars-Genesis-KR-Patcher/releases/tag/v0.2.4-rc.1)은 **최신 번역 505건이 들어 있지 않은 이전 작업본**입니다.
-   현재 브랜치의 신규 8.8.4 Strings 번역이 실제 인게임에서 검수된 뒤 후속 버전을 별도로 공개하겠습니다. 지금 RC1을 정식판으로 설치하는 것은 권장하지 않습니다.
+1. [v0.2.4 정식 릴리즈](https://github.com/munument1/StarWars-Genesis-KR-Patcher/releases/tag/v0.2.4)에서 `GenesisKRPatcher-v0.2.4.zip`을 내려받아 압축을 풉니다. 이전 v0.2.4-rc.1 시험판은 최신 Strings 번역을 포함하지 않습니다.
 2. 실행 중인 Starfield를 완전히 종료합니다.
 3. `GenesisKRPatcher.exe`를 실행해 제네시스의 **Game 폴더**를 선택합니다.
    `mods`, `profiles`, `ModOrganizer.ini`가 들어 있는 폴더입니다.
@@ -40,7 +39,7 @@ v0.2.4는 Genesis 8.8.4에 대응하는 버전입니다. 이전 8.8.32용 v0.2.3
 나머지 3,286건은 빈 문자열 640, 런타임 변수/태그 261, 기술용 식별자 1,511, 구조 재검증 후 원문 유지로 판정한 874건입니다.
 원문 불일치 때문에 잘못된 구번역을 강제 적용하지 않습니다. 따라서 8.8.4 대응은 **완역을 의미하지 않습니다.**
 874건은 `FACT`·`FLST` 등의 내부·콘솔용 이름과 숫자·원소 기호, 표시 참조 미확인 기술 문자열입니다. **이번에는 추가 번역하지 않고 그대로 보존합니다.** 자세한 수치와 보류 기준은 [8.8.4 Strings 번역 반영·검수 상태](docs/genesis-8.8.4-strings-status.md)를 참고하세요.
-전체 인게임 표시를 확인하기 전에는 릴리즈 후보(`release_candidate_pending_8.8.4_gameplay_qa`)로 유지합니다.
+설치·복원 및 번역 자료의 구조 검증을 통과한 **v0.2.4 정식 배포판**입니다. 단, 전체 퀘스트를 끝까지 진행한 인게임 검수를 완료했다는 뜻은 아닙니다.
 
 패처의 적용 대상은 **제네시스 `mods` 폴더와 Game 폴더의 BAT**입니다.
 Steam 본편 `Starfield/Data`는 버전 확인을 위해 읽기만 하며 수정하지 않습니다.

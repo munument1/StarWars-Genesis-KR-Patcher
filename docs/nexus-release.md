@@ -1,8 +1,14 @@
-# 넥서스 자동 릴리즈 배포
+# 넥서스 수동 릴리즈 배포
 
 대상: https://www.nexusmods.com/starfield/mods/18396
 
-## 최초 설정
+**Nexus Mods 업로드는 저장소 소유자가 직접 진행합니다.** GitHub 정식 릴리즈가 생성되어도 Nexus에 자동 업로드되지 않습니다. 예약 작업 및 GitHub `Publish patcher to Nexus Mods` 워크플로는 비활성화했습니다.
+
+## 수동 업로드
+
+GitHub [v0.2.4 릴리즈](https://github.com/munument1/StarWars-Genesis-KR-Patcher/releases/tag/v0.2.4)에서 `GenesisKRPatcher-v0.2.4.zip`과 `SHA256SUMS-v0.2.4.txt`를 내려받아 SHA-256을 확인하고, 본인 Nexus Mods 페이지에서 파일을 직접 업로드합니다. 기존 v0.2.3 파일은 삭제하지 않습니다.
+
+## 비활성화한 기존 API 워크플로 참고
 
 1. GitHub 저장소 Settings → Secrets and variables → Actions → Secrets에
    `NEXUSMODS_API_KEY`를 등록합니다. 모드 업로드 권한이 있는 넥서스 계정의 API 키를 사용합니다.
@@ -19,12 +25,12 @@ API 키 발급/확인: https://www.nexusmods.com/users/myaccount?tab=api
 다운로드 링크의 게임별 file_id와는 다를 수 있습니다. 설정한 ID가 해당 모드의
 활성 파일에 속하는지도 업로드 전에 확인합니다.
 
-## 자동 실행
+## 기존 자동 실행 설계 (현재 비활성화)
 
-- 사람이 발행한 정식 GitHub 릴리즈는 release/published 이벤트로 배포합니다.
+- 자동 업로드 이벤트(`release/published`, `workflow_run`)를 제거했습니다. GitHub Actions 설정에서도 해당 워크플로를 비활성화했으므로 자동 전송하지 않습니다.
 - `Build verified v0.2.4 assets`를 수동 실행해 검사·EXE 빌드·ZIP 검증을 통과하면
   새 v0.2.4 GitHub 릴리즈가 생성됩니다. 이미 해당 릴리즈가 있으면 덮어쓰지 않고 실패합니다.
-  성공한 빌드의 workflow_run 이벤트로 자동 배포할 수 있습니다.
+  성공한 빌드가 Nexus 업로드를 자동으로 시작하지 않습니다.
   이 경로에서는 해당 빌드 실행 중 최신 정식 릴리즈의 자산이 생성된 경우에만 배포합니다.
   GITHUB_TOKEN으로 만든 릴리즈가 다른 release 워크플로를 발생시키지 않는 상황을 처리합니다.
 - draft/prerelease는 배포하지 않습니다. 업로드는 저장소별로 직렬 실행합니다.

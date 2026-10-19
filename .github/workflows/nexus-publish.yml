@@ -1,12 +1,6 @@
 name: Publish patcher to Nexus Mods
 
 on:
-  release:
-    types: [published]
-  workflow_run:
-    workflows: ['Build verified v0.2.4 assets']
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
     inputs:
       tag:
