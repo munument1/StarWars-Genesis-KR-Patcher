@@ -1,4 +1,4 @@
-name: Build verified v0.2.4 assets
+name: Build verified v0.2.5 assets
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ jobs:
       - name: Verify release metadata, payload and installer tests
         shell: pwsh
         run: |
-          python -m unittest test_installer_backend test_patch_engine test_patcher_app
+          python -m unittest discover -p 'test_*.py'
           python patcher_app.py --self-check source-self-check.json
           @'
           import hashlib, json
@@ -26,7 +26,7 @@ jobs:
           package = Path('installer-data')
           manifest = json.loads((package / 'manifest.json').read_text(encoding='utf-8'))
           assert manifest['target_version'] == '8.8.4', 'Expected Genesis 8.8.4'
-          assert manifest['version'] == '0.2.4', 'Expected patcher v0.2.4'
+          assert manifest['version'] == '0.2.5', 'Expected patcher v0.2.5'
           assert manifest['release_state'] == 'RELEASE', 'Only release-ready payloads may be published'
           assert manifest['operations'], 'No operations'
           targets = [item['target'] for item in manifest['operations']]
@@ -60,7 +60,7 @@ jobs:
           source = json.loads(Path('source-self-check.json').read_text(encoding='utf-8'))
           embedded = json.loads(Path('exe-self-check.json').read_text(encoding='utf-8'))
           assert embedded == source and embedded['embedded_payload_verified'], 'Embedded payload differs from source'
-          assert embedded['target_version'] == '8.8.4' and embedded['version'] == '0.2.4'
+          assert embedded['target_version'] == '8.8.4' and embedded['version'] == '0.2.5'
           '@ | python -
           New-Item -ItemType Directory -Path package -Force | Out-Null
           Copy-Item dist/GenesisKRPatcher.exe package/
@@ -70,7 +70,7 @@ jobs:
           import hashlib, zipfile
           from pathlib import Path
 
-          output = Path('GenesisKRPatcher-v0.2.4.zip')
+          output = Path('GenesisKRPatcher-v0.2.5.zip')
           with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:
               for path in Path('package').iterdir():
                   archive.write(path, path.name)
@@ -78,19 +78,19 @@ jobs:
               assert archive.testzip() is None, 'Corrupt release ZIP'
               assert set(archive.namelist()) == {'GenesisKRPatcher.exe', '사용방법.txt', 'Pretendard-LICENSE.txt'}
           digest = hashlib.sha256(output.read_bytes()).hexdigest()
-          Path('SHA256SUMS-v0.2.4.txt').write_text(f'{digest}  {output.name}\n', encoding='ascii')
+          Path('SHA256SUMS-v0.2.5.txt').write_text(f'{digest}  {output.name}\n', encoding='ascii')
           '@ | python -
       - uses: actions/upload-artifact@v4
         with:
-          name: verified-v0.2.4-assets
+          name: verified-v0.2.5-assets
           path: |
-            GenesisKRPatcher-v0.2.4.zip
-            SHA256SUMS-v0.2.4.txt
+            GenesisKRPatcher-v0.2.5.zip
+            SHA256SUMS-v0.2.5.txt
             source-self-check.json
             exe-self-check.json
           if-no-files-found: error
-      - name: Publish new v0.2.4 release
+      - name: Publish new v0.2.5 release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v0.2.4 GenesisKRPatcher-v0.2.4.zip SHA256SUMS-v0.2.4.txt --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Star Wars Genesis 8.8.4 한국어 패처 v0.2.4" --notes-file RELEASE_NOTES.md
+          gh release create v0.2.5 GenesisKRPatcher-v0.2.5.zip SHA256SUMS-v0.2.5.txt --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Star Wars Genesis 8.8.4 한국어 패처 v0.2.5" --notes-file RELEASE_NOTES.md

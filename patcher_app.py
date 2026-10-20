@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import filedialog,messagebox,ttk
 from installer_backend import generate,apply,restore,sha,safe
 
-PATCHER_VERSION='0.2.4'
+PATCHER_VERSION='0.2.5'
 GENESIS_VERSION='8.8.4'
 
 def package_dir():
@@ -15,6 +15,10 @@ def check_release_metadata():
     manifest=json.loads((package_dir()/'manifest.json').read_text(encoding='utf-8'))
     if manifest.get('target_version')!=GENESIS_VERSION or manifest.get('version')!=PATCHER_VERSION:
         raise ValueError('Package version does not match this patcher release')
+    if manifest.get('compatibility_anchor_sha256'):
+        anchor=package_dir()/'compatibility-anchors.json'
+        if not anchor.is_file() or sha(anchor.read_bytes())!=manifest['compatibility_anchor_sha256']:
+            raise ValueError('Translation identity metadata missing or corrupted')
     return manifest
 
 class App:

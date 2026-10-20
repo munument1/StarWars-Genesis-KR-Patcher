@@ -6,7 +6,7 @@
 
 ## 수동 업로드
 
-GitHub [v0.2.4 릴리즈](https://github.com/munument1/StarWars-Genesis-KR-Patcher/releases/tag/v0.2.4)에서 `GenesisKRPatcher-v0.2.4.zip`과 `SHA256SUMS-v0.2.4.txt`를 내려받아 SHA-256을 확인하고, 본인 Nexus Mods 페이지에서 파일을 직접 업로드합니다. 기존 v0.2.3 파일은 삭제하지 않습니다.
+GitHub [v0.2.5 릴리즈](https://github.com/munument1/StarWars-Genesis-KR-Patcher/releases/tag/v0.2.5)에서 `GenesisKRPatcher-v0.2.5.zip`과 `SHA256SUMS-v0.2.5.txt`를 내려받아 SHA-256을 확인하고, 본인 Nexus Mods 페이지에서 파일을 직접 업로드합니다. 기존 v0.2.4 파일은 삭제하지 않습니다.
 
 ## 비활성화한 기존 API 워크플로 참고
 
@@ -28,13 +28,13 @@ API 키 발급/확인: https://www.nexusmods.com/users/myaccount?tab=api
 ## 기존 자동 실행 설계 (현재 비활성화)
 
 - 자동 업로드 이벤트(`release/published`, `workflow_run`)를 제거했습니다. GitHub Actions 설정에서도 해당 워크플로를 비활성화했으므로 자동 전송하지 않습니다.
-- `Build verified v0.2.4 assets`를 수동 실행해 검사·EXE 빌드·ZIP 검증을 통과하면
-  새 v0.2.4 GitHub 릴리즈가 생성됩니다. 이미 해당 릴리즈가 있으면 덮어쓰지 않고 실패합니다.
+- `Build verified v0.2.5 assets`를 수동 실행해 검사·EXE 빌드·ZIP 검증을 통과하면
+  새 v0.2.5 GitHub 릴리즈가 생성됩니다. 이미 해당 릴리즈가 있으면 덮어쓰지 않고 실패합니다.
   성공한 빌드가 Nexus 업로드를 자동으로 시작하지 않습니다.
   이 경로에서는 해당 빌드 실행 중 최신 정식 릴리즈의 자산이 생성된 경우에만 배포합니다.
   GITHUB_TOKEN으로 만든 릴리즈가 다른 release 워크플로를 발생시키지 않는 상황을 처리합니다.
 - draft/prerelease는 배포하지 않습니다. 업로드는 저장소별로 직렬 실행합니다.
-- 현재 배포 연결은 `v0.2.4`만 처리합니다. 과거 릴리즈를 잘못 8.8.4로 등록하지 않습니다.
+- Nexus 자동 배포 워크플로는 비활성화된 과거 v0.2.4 전용 구성으로 유지됩니다. v0.2.5는 Nexus에 자동 업로드되지 않습니다.
 - Nexus의 활성 버전에 같은 버전 번호가 있으면 업로드를 생략합니다.
   같은 태그의 파일을 교체해도 다시 배포하지 않으므로, 새 배포에는 새 버전 태그를 사용하세요.
 - 릴리즈 파일명과 체크섬 이름은 기존 패키징 규칙을 따릅니다.

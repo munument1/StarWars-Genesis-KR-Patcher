@@ -36,6 +36,45 @@ class EngineTests(unittest.TestCase):
         for mapping in [{('MISC',1,'FULL',0):('Wrong','안녕')},{('MISC',2,'FULL',0):('Hi','안녕')}]:
             with self.assertRaises(PatchError):patch_plugin(original,mapping)
 
+    def test_compatible_plugin_reuses_matching_fields_and_preserves_updated_ones(self):
+        original=record(b'TES4',b'')+group(
+            record(b'MISC',field(b'FULL',b'Hello\0'),1,0x40000)+
+            record(b'MISC',field(b'FULL',b'Changed upstream\0'),2))
+        translation={('MISC',1,'FULL',0):('Hello','안녕하세요'),
+                     ('MISC',2,'FULL',0):('Original','예전 번역'),
+                     ('MISC',3,'FULL',0):('Deleted','제거됨')}
+        result,changed,skipped=patch_plugin(original,translation,compatible=True)
+        self.assertEqual(changed,[('MISC',1,'FULL',0)])
+        self.assertEqual(set(skipped),{(('MISC',2,'FULL',0),'source_changed'),
+                                       (('MISC',3,'FULL',0),'target_missing')})
+        self.assertIn(field(b'FULL','안녕하세요\0'.encode('utf8')),zlib.decompress(result[24+24+24+4:]))
+        self.assertIn(field(b'FULL',b'Changed upstream\0'),result)
+        again,changes,_=patch_plugin(result,translation,compatible=True)
+        self.assertEqual(again,result)
+        self.assertEqual(changes,[])
+
+    def test_compatible_still_rejects_corrupt_structure_or_bad_tokens(self):
+        bad=record(b'TES4',b'')+record(b'MISC',field(b'FULL',b'Hello <Alias=Player>\0'),1)
+        with self.assertRaises(PatchError):
+            patch_plugin(bad,{('MISC',1,'FULL',0):('Hello <Alias=Player>','안녕하세요')},compatible=True)
+        with self.assertRaises(PatchError):
+            patch_plugin(bad[:-2],{('MISC',1,'FULL',0):('Hello','안녕')},compatible=True)
+
+    def test_compatible_plugin_can_upgrade_known_previous_korean_translation(self):
+        key=('MISC',1,'FULL',0)
+        updated=record(b'TES4',b'')+record(b'MISC',field(b'FULL','옛 한국어\0'.encode()),1)
+        new,changes,skips=patch_plugin(updated,{key:('English','새 한국어')},compatible=True,
+                                         aliases={key:[('옛 한국어','새 한국어')]})
+        self.assertEqual(changes,[key]);self.assertEqual(skips,[])
+        self.assertIn('새 한국어\0'.encode(),new)
+
+    def test_compatible_strings_upgrade_known_previous_korean(self):
+        previous='옛 한국어\0'.encode();raw=struct.pack('<IIII',1,len(previous),123,0)+previous
+        new,changes,skips=patch_strings(raw,'.strings',{123:('English','새 한국어')},compatible=True,
+                                        aliases={123:[('옛 한국어','새 한국어')]})
+        self.assertEqual(changes,[123]);self.assertEqual(skips,[])
+        self.assertEqual(read_strings(new,'.strings')[0][1],'새 한국어')
+
     def test_malformed_source_repair_requires_exact_raw_bytes(self):
         raw=bytes.fromhex('4e75747269656e74858f')
         original=record(b'TES4',b'')+record(b'MISC',field(b'FULL',raw+b'\0'),1)
@@ -54,6 +93,20 @@ class EngineTests(unittest.TestCase):
             self.assertEqual(struct.unpack_from('<II',result,8),(42,0))
             self.assertEqual(struct.unpack_from('<I',result,4)[0],len(result)-16)
 
+    def test_compatible_strings_only_changes_matching_ids(self):
+        for kind in ('.strings','.dlstrings','.ilstrings'):
+            entries=[(42,'Hello'),(43,'Changed upstream'),(99,'new entry')]
+            blocks=[];directory=[];offset=0
+            for sid,value in entries:
+                encoded=value.encode()+b'\0'
+                block=encoded if kind=='.strings' else struct.pack('<I',len(encoded))+encoded
+                directory.append(struct.pack('<II',sid,offset));blocks.append(block);offset+=len(block)
+            source=struct.pack('<II',len(entries),offset)+b''.join(directory)+b''.join(blocks)
+            current,changes,skips=patch_strings(source,kind,{42:('Hello','안녕'),43:('Old','옛것'),55:('Missing','없음')},compatible=True)
+            self.assertEqual(changes,[42]);self.assertEqual(set(skips),{(43,'source_changed'),(55,'target_missing')})
+            values={sid:value for sid,value,_ in read_strings(current,kind)}
+            self.assertEqual(values,{42:'안녕',43:'Changed upstream',99:'new entry'})
+
     def test_placeholders_and_localized_plugins_fail_closed(self):
         with self.assertRaises(PatchError):patch_strings(strings('.strings'),'.strings',{42:('Hello <Alias=Player>','안녕')})
         with self.assertRaises(PatchError):patch_plugin(record(b'TES4',b'',flags=0x80),{('MISC',1,'FULL',0):('Hi','안녕')})
@@ -69,5 +122,15 @@ class EngineTests(unittest.TestCase):
         original="<image name='BookImage_SlaytonLogo' caption='Slayton Aerospace'>"
         check_translation(original,"<image name='BookImage_SlaytonLogo' caption='슬레이튼 에어로스페이스'>")
         with self.assertRaises(PatchError):check_translation(original,"<image name='different_asset' caption='슬레이튼 에어로스페이스'>")
+
+    def test_printf_format_specifiers_are_protected(self):
+        # Real Genesis strings have %.0f, and older regexes missed it.
+        from patch_engine import check_translation,translation_tokens
+        original='Progress: %.0f of %1$05d %u %% <Alias=Player>'
+        self.assertEqual(translation_tokens(original),{
+            '%.0f':1,'%1$05d':1,'%u':1,'%%':1,'<Alias=Player>':1})
+        check_translation(original,'진행: %.0f / %1$05d %u %% <Alias=Player>')
+        with self.assertRaises(PatchError):check_translation(original,'진행: %1$05d %u %% <Alias=Player>')
+        with self.assertRaises(PatchError):check_translation('Remaining %s','남은 수량 %d')
 
 if __name__=='__main__':unittest.main()

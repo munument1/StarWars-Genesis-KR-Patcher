@@ -10,3 +10,4 @@ API.txt
 .env.*
 output/
 *.log
+.local/

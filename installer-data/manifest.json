@@ -2,6 +2,7 @@
   "schema": 1,
   "name": "Star Wars Genesis Korean Patcher",
   "target_version": "8.8.4",
+  "compatibility_anchor_sha256": "bc725132d889e28c9a31b0c5c724ab652fea431174a88e46aabee19247f2f2c0",
   "release_state": "RELEASE",
   "semantic_review_remaining": 0,
   "reviewed_items": 6371,
@@ -1867,7 +1868,7 @@
     }
   ],
   "note": "8.8.4 patcher: restores existing SST/GitHub translations and reviewed ESM additions. Newly added 8.8.4 DLC Strings/dialogue remain partially untranslated and require additional QA.",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "verified_in_game": false,
   "donor_reuse": {
     "comparison_sha256": "fa8ce521bd61266a298e5f5a41f0f7ae0668918a36a07fe9dfbcbb6f0af191af",

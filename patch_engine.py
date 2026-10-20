@@ -4,13 +4,14 @@ from collections import Counter
 
 class PatchError(ValueError):pass
 CONTROL_PATTERN=r'\[(?:Accept|Activate|DataMenu|Cancel|XButton|Monocle|Confirm|SelectTarget|Jump|LShoulder|RShoulder|RTrigger|WeaponGroup[123]|Move|StrafeLeft|StrafeRight|Forward|Back|TogglePOV|Sneak|PrimaryAttack|SecondaryAttack|LeftStick|RepairShip|Click|QuickInventory|Boosters|Sprint|AltAttack|ExecuteJump|Edit|ToggleView|PlaceBeacon|ZoomIn|Look|WeaponReadyReload|RotateLock|VATS|RightStick|Quickkey10|QuickkeyDown|PlaceMarker|TakeOff|SHMonocle|ShipBuilder|FlightCheck|MoveUp|MoveDown|ApplyCritical|StartWait|CargoHold|ShipTransaction|FastTravelShip|RotatePick|ReadyWeapon|LTrigger|Mouse2|NextTarget|PrevTarget|_Dpad_None|L3|R3|ChangeMode)(?::\d+)?\]'
+PRINTF_PATTERN=r'%(?:%|(?:\d+\$)?[-+#0\']*(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh|h|ll|l|j|z|t|L)?[diuoxXfFeEgGaAcspn])'
 
 def decode_text(raw):
     try:return raw.decode('utf-8')
     except UnicodeDecodeError:return raw.decode('cp1252')
 
 def translation_tokens(text):
-    tokens=re.findall(r'<[^>]+>|%\d*\$?[sdif]|\{\d+\}',text)
+    tokens=re.findall(r'<[^>]+>|'+PRINTF_PATTERN+r'|\{\d+\}',text)
     # Book image captions are display text. Protect the image name and all other
     # attributes while allowing only the quoted caption value to be localized.
     return Counter(re.sub(r"(\bcaption\s*=\s*)(['\"])(.*?)\2",lambda m:m[1]+m[2]+'__CAPTION__'+m[2],token)
@@ -21,9 +22,8 @@ def check_translation(source,translation):
     if translation_tokens(source)!=translation_tokens(translation):
         raise PatchError('Placeholder mismatch')
     if source.count('\n')!=translation.count('\n'):raise PatchError('Newline mismatch')
-    if re.search(r'\b(?:press|hold|holding|using|controls|key|button)\b',source,re.I):
-        if Counter(re.findall(CONTROL_PATTERN,source))!=Counter(re.findall(CONTROL_PATTERN,translation)):
-            raise PatchError('Control token mismatch')
+    if Counter(re.findall(CONTROL_PATTERN,source))!=Counter(re.findall(CONTROL_PATTERN,translation)):
+        raise PatchError('Control token mismatch')
     return translation.encode('utf-8')+b'\0'
 
 def field_spans(body):
@@ -48,9 +48,15 @@ def encode_field(name,value):
     if length>65535:return b'XXXX\x04\0'+struct.pack('<I',length)+name+b'\0\0'+value
     return name+struct.pack('<H',length)+value
 
-def patch_plugin(data,translations):
-    """Map (record, FormID integer, field, index) to (source, translation)."""
-    changed=[];seen=set()
+def patch_plugin(data,translations,*,compatible=False,aliases=None):
+    """Map (record, FormID integer, field, index) to (source, translation).
+
+    With compatible=True, only old source/record drift is skipped. Bad record
+    structure, unsafe translation tokens and duplicate target fields still
+    fail closed. Returns (result, changed, skipped) in compatible mode; the
+    historical strict-mode two-value return is unchanged.
+    """
+    changed=[];seen=set();skipped=[]
     record_targets={}
     for key,value in translations.items():record_targets.setdefault(key[:2],{})[key]=value
     if len(data)<24 or data[:4]!=b'TES4':raise PatchError('Not a plugin')
@@ -85,10 +91,21 @@ def patch_plugin(data,translations):
                 if key not in wanted:pieces.append(original);continue
                 if key in seen:raise PatchError('Duplicate target record/field')
                 seen.add(key);spec=wanted[key];source,translation=spec[:2]
-                if not value.endswith(b'\0'):raise PatchError('Nonterminated text field')
-                if len(spec)==3:
-                    if value[:-1]!=bytes.fromhex(spec[2]):raise PatchError('Raw source changed since extraction')
-                elif decode_text(value[:-1])!=source:raise PatchError('Source changed since extraction')
+                if not value.endswith(b'\0'):
+                    if compatible:skipped.append((key,'nonterminated'));pieces.append(original);continue
+                    raise PatchError('Nonterminated text field')
+                def matches(s):
+                    if len(s)==3:return value[:-1]==bytes.fromhex(s[2])
+                    try:return decode_text(value[:-1])==s[0]
+                    except UnicodeDecodeError:
+                        if compatible:return False
+                        raise
+                if not matches(spec):
+                    alternate=next((s for s in (aliases or {}).get(key,())
+                                    if s[1]==translation and matches(s)),None) if compatible else None
+                    if alternate is not None:source=alternate[0]
+                    elif compatible:skipped.append((key,'source_changed'));pieces.append(original);continue
+                    else:raise PatchError('Source changed since extraction')
                 if source==translation:pieces.append(original);continue
                 new=check_translation(source,translation)
                 pieces.append(encode_field(field,new));record_changed=True;changed.append(key)
@@ -98,7 +115,11 @@ def patch_plugin(data,translations):
             output.append(header[:4]+struct.pack('<I',len(newpayload))+header[8:]+newpayload)
         return b''.join(output)
     result=walk(0,len(data))
-    if seen!=set(translations):raise PatchError('Some translation targets were not found')
+    missing=set(translations)-seen
+    if missing and not compatible:raise PatchError('Some translation targets were not found')
+    if compatible:
+        skipped.extend((key,'target_missing') for key in sorted(missing))
+        return result,changed,skipped
     return result,changed
 
 def read_strings(raw,kind):
@@ -121,17 +142,23 @@ def read_strings(raw,kind):
         entries.append((sid,decode_text(value),block))
     return entries
 
-def patch_strings(raw,kind,translations):
+def patch_strings(raw,kind,translations,*,compatible=False,aliases=None):
     entries=read_strings(raw,kind);directory=[];blocks=[];offset=0;changed=[];seen=set()
+    skipped=[]
     for sid,source,block in entries:
         if sid in translations:
             seen.add(sid);expected,translation=translations[sid]
-            if source!=expected:raise PatchError('Strings source changed since extraction')
-            if source!=translation:
+            if source!=expected and not (compatible and any(src==source and dest==translation
+                                                            for src,dest in (aliases or {}).get(sid,()))):
+                if compatible:skipped.append((sid,'source_changed'))
+                else:raise PatchError('Strings source changed since extraction')
+            elif source!=translation:
                 encoded=check_translation(source,translation)
                 block=encoded if kind=='.strings' else struct.pack('<I',len(encoded))+encoded
                 changed.append(sid)
         directory.append(struct.pack('<II',sid,offset));blocks.append(block);offset+=len(block)
-    if seen!=set(translations):raise PatchError('Missing String ID')
-    if not changed:return raw,changed
-    return struct.pack('<II',len(entries),offset)+b''.join(directory)+b''.join(blocks),changed
+    missing=set(translations)-seen
+    if missing and not compatible:raise PatchError('Missing String ID')
+    if compatible:skipped.extend((sid,'target_missing') for sid in sorted(missing))
+    output=struct.pack('<II',len(entries),offset)+b''.join(directory)+b''.join(blocks) if changed else raw
+    return (output,changed,skipped) if compatible else (output,changed)
