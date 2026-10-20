@@ -115,6 +115,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_updated_plugin_reuses_matching_field_and_restores_updated_original(self):
         from test_patch_engine import record,field,group
+        from plugin_anchors import build_anchor
         def plugin(first,second,extra=b''):
             return record(b'TES4',b'')+group(
                 record(b'MISC',field(b'EDID',b'RecordOne\0')+field(b'FULL',first.encode()+b'\0'),1)+
@@ -129,7 +130,10 @@ class InstallerTests(unittest.TestCase):
         blob=backend.sha(recipe);(self.package/'blobs'/blob).write_bytes(recipe)
         operation={'target':'mods/TestMod/Example.esm','kind':'text_recipe','blob':blob,
                    'input_sha256':backend.sha(original),'output_sha256':backend.sha(desired)}
-        (self.package/'manifest.json').write_text(json.dumps({'default_profile':'test','operations':[operation]}),encoding='utf-8')
+        (self.package/'manifest.json').write_text(json.dumps({'default_profile':'test','target_version':'test','operations':[operation]}),encoding='utf-8')
+        anchor={'schema':1,'target_version':'test','plugins':{
+            operation['target']:dict(input_sha256=backend.sha(original),**build_anchor(original,mapping))}}
+        (self.package/'compatibility-anchors.json').write_text(json.dumps(anchor),encoding='utf-8')
         report=self.prepare();prepared=report['operations'][0]
         self.assertEqual(prepared['status'],'prepared')
         self.assertEqual(prepared['compatibility'],'reused_unchanged_sources')

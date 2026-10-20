@@ -4,13 +4,14 @@ from collections import Counter
 
 class PatchError(ValueError):pass
 CONTROL_PATTERN=r'\[(?:Accept|Activate|DataMenu|Cancel|XButton|Monocle|Confirm|SelectTarget|Jump|LShoulder|RShoulder|RTrigger|WeaponGroup[123]|Move|StrafeLeft|StrafeRight|Forward|Back|TogglePOV|Sneak|PrimaryAttack|SecondaryAttack|LeftStick|RepairShip|Click|QuickInventory|Boosters|Sprint|AltAttack|ExecuteJump|Edit|ToggleView|PlaceBeacon|ZoomIn|Look|WeaponReadyReload|RotateLock|VATS|RightStick|Quickkey10|QuickkeyDown|PlaceMarker|TakeOff|SHMonocle|ShipBuilder|FlightCheck|MoveUp|MoveDown|ApplyCritical|StartWait|CargoHold|ShipTransaction|FastTravelShip|RotatePick|ReadyWeapon|LTrigger|Mouse2|NextTarget|PrevTarget|_Dpad_None|L3|R3|ChangeMode)(?::\d+)?\]'
+PRINTF_PATTERN=r'%(?:%|(?:\d+\$)?[-+#0\']*(?:\d+|\*)?(?:\.(?:\d+|\*))?(?:hh|h|ll|l|j|z|t|L)?[diuoxXfFeEgGaAcspn])'
 
 def decode_text(raw):
     try:return raw.decode('utf-8')
     except UnicodeDecodeError:return raw.decode('cp1252')
 
 def translation_tokens(text):
-    tokens=re.findall(r'<[^>]+>|%\d*\$?[sdif]|\{\d+\}',text)
+    tokens=re.findall(r'<[^>]+>|'+PRINTF_PATTERN+r'|\{\d+\}',text)
     # Book image captions are display text. Protect the image name and all other
     # attributes while allowing only the quoted caption value to be localized.
     return Counter(re.sub(r"(\bcaption\s*=\s*)(['\"])(.*?)\2",lambda m:m[1]+m[2]+'__CAPTION__'+m[2],token)
@@ -21,9 +22,8 @@ def check_translation(source,translation):
     if translation_tokens(source)!=translation_tokens(translation):
         raise PatchError('Placeholder mismatch')
     if source.count('\n')!=translation.count('\n'):raise PatchError('Newline mismatch')
-    if re.search(r'\b(?:press|hold|holding|using|controls|key|button)\b',source,re.I):
-        if Counter(re.findall(CONTROL_PATTERN,source))!=Counter(re.findall(CONTROL_PATTERN,translation)):
-            raise PatchError('Control token mismatch')
+    if Counter(re.findall(CONTROL_PATTERN,source))!=Counter(re.findall(CONTROL_PATTERN,translation)):
+        raise PatchError('Control token mismatch')
     return translation.encode('utf-8')+b'\0'
 
 def field_spans(body):

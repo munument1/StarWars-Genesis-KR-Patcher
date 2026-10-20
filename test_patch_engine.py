@@ -123,4 +123,14 @@ class EngineTests(unittest.TestCase):
         check_translation(original,"<image name='BookImage_SlaytonLogo' caption='슬레이튼 에어로스페이스'>")
         with self.assertRaises(PatchError):check_translation(original,"<image name='different_asset' caption='슬레이튼 에어로스페이스'>")
 
+    def test_printf_format_specifiers_are_protected(self):
+        # Real Genesis strings have %.0f, and older regexes missed it.
+        from patch_engine import check_translation,translation_tokens
+        original='Progress: %.0f of %1$05d %u %% <Alias=Player>'
+        self.assertEqual(translation_tokens(original),{
+            '%.0f':1,'%1$05d':1,'%u':1,'%%':1,'<Alias=Player>':1})
+        check_translation(original,'진행: %.0f / %1$05d %u %% <Alias=Player>')
+        with self.assertRaises(PatchError):check_translation(original,'진행: %1$05d %u %% <Alias=Player>')
+        with self.assertRaises(PatchError):check_translation('Remaining %s','남은 수량 %d')
+
 if __name__=='__main__':unittest.main()

@@ -2,6 +2,7 @@
 import base64,gzip,hashlib,json,os,re,subprocess,uuid
 from pathlib import Path
 from patch_engine import patch_plugin,patch_strings
+from plugin_anchors import remap_translations
 from preserve_font_resources import patch_font_bytes
 from hud_layout import patch_hud
 
@@ -67,6 +68,18 @@ def generate(game,package,stage,profile=None,progress=lambda text:None):
     if stage.is_relative_to(game) or game.is_relative_to(stage):raise InstallError('Preview folder must be separate from the game folder')
     if stage.is_relative_to(package) or package.is_relative_to(stage):raise InstallError('Preview folder must be separate from the package folder')
     manifest=json.loads((package/'manifest.json').read_text(encoding='utf-8'))
+    anchor_path=package/'compatibility-anchors.json'
+    anchors=None
+    if manifest.get('compatibility_anchor_sha256') and not anchor_path.is_file():
+        raise InstallError('Compatibility anchor data missing from package')
+    if anchor_path.is_file():
+        raw_anchors=anchor_path.read_bytes()
+        expected_anchor_hash=manifest.get('compatibility_anchor_sha256')
+        if expected_anchor_hash and sha(raw_anchors)!=expected_anchor_hash:
+            raise InstallError('Compatibility anchor checksum mismatch')
+        anchors=json.loads(raw_anchors)
+        if anchors.get('schema')!=1 or anchors.get('target_version')!=manifest.get('target_version'):
+            raise InstallError('Compatibility anchor schema/version mismatch')
     drifted=[];observed={}
     content=check_base_content(game,manifest,progress,allow_drift=True,drifted=drifted,observed=observed)
     names,_=providers(game,profile or manifest['default_profile']);items=[]
@@ -121,12 +134,20 @@ def generate(game,package,stage,profile=None,progress=lambda text:None):
                         current_spec=mapping.get(old_key)
                         if current_spec and len(old_spec) in (2,3) and old_spec[1]==current_spec[1]:
                             aliases.setdefault(old_key,[]).append(old_spec)
+                identity_skipped=[]
+                if recipe['kind']=='plugin':
+                    anchor=(anchors or {}).get('plugins',{}).get(r['target'])
+                    if not anchor or anchor.get('input_sha256')!=r['input_sha256']:
+                        r.update(status='identity_metadata_unavailable',current_sha256=actual)
+                        items.append(r);continue
+                    mapping,aliases,identity_skipped=remap_translations(current,mapping,anchor,aliases=aliases)
                 output,changes,skipped=(patch_plugin(current,mapping,compatible=True,aliases=aliases) if recipe['kind']=='plugin'
                                         else patch_strings(current,recipe['kind'],mapping,compatible=True,aliases=aliases))
                 r.update(compatibility='reused_unchanged_sources',matched_changes=len(changes),
                          skipped_changed=sum(reason=='source_changed' for _,reason in skipped),
                          skipped_missing=sum(reason=='target_missing' for _,reason in skipped),
-                         skipped_unterminated=sum(reason=='nonterminated' for _,reason in skipped))
+                         skipped_unterminated=sum(reason=='nonterminated' for _,reason in skipped),
+                         skipped_identity=len(identity_skipped))
                 if not changes:
                     r['status']='no_matching_changes';r['current_sha256']=actual;items.append(r);continue
             else:

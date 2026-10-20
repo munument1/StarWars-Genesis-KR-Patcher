@@ -12,9 +12,10 @@
 
 1. 입력 해시가 공식 지원판/알려진 기존 한패와 같다면 **기존의 엄격한 적용 및
    고정 결과 해시 검사**를 사용합니다.
-2. 입력 해시가 다르다면 파일을 안전하게 파싱한 뒤, 같은 `레코드 종류 + FormID
-   + 필드 + 등장 순서`와 **동일한 영어 원문**이 있는 항목만 기존 번역으로
-   바꿉니다. Strings에서는 `String ID + 영어 원문`을 사용합니다.
+2. 입력 해시가 다르다면 파일을 안전하게 파싱합니다. ESM은 **원본 해시로
+   확인한 마스터 목록과 레코드 EditorID**를 사용해 현재 FormID를 정규화한 뒤
+   `레코드 종류 + 재식별된 FormID + 필드 + 등장 순서 + 영어 원문`이 맞는
+   항목만 적용합니다. Strings에서는 `String ID + 영어 원문`을 사용합니다.
 3. `upgrade_from`에 등록된 과거 한국어 원문도, **현재 공식 번역 목적문이 동일한
    경우에 한해** 번역 갱신용 입력으로 인정합니다.
 4. 없거나 원문이 변경된 항목은 건너뜁니다. 번역이 하나도 적용되지 않으면
@@ -31,9 +32,12 @@
 ## 지원 및 한계
 
 - 지원: 같은 이름/경로의 플러그인에 레코드가 추가됐거나, 일부 텍스트만
-  수정됐거나, STRINGS에 ID가 추가·변경된 업데이트.
+  수정됐거나, STRINGS에 ID가 추가·변경된 업데이트. 플러그인의 MAST
+  순서가 바뀐 경우도 **원래 마스터 이름과 EditorID를 확인할 수 있는
+  레코드에 한해** 안전하게 재매핑합니다.
 - 미지원: 플러그인명/모드 설치 경로 변경, 레코드 FormID의 전면 재배치,
-  필드가 다른 구조로 변경된 경우. 이런 항목은 안전하게 재식별할 데이터가
+  FD/FE 등 지원되지 않는 FormID 구조, 필드가 다른 구조로 변경된 경우.
+  마스터가 바뀌고 EditorID도 없는 레코드는 안전하게 재식별할 데이터가
   없으므로 **자동 추측해 강제 적용하지 않음**.
 - 게임 본편·DLC의 검사 대상 해시가 바뀌면 **텍스트 레시피만 진행**하고
   폰트·HUD·복사·fallback 작업은 제외합니다. 게임/DLC의 실제 해시는
@@ -47,8 +51,17 @@
 
 ```powershell
 python -m unittest test_patch_engine test_installer_backend test_patcher_app
+python -m unittest discover -p 'test_*.py'
+python scripts/validate_update_compatibility.py --game "D:\Star Wars Genesis\Game"
 ```
 
 합성 ESM/STRINGS 업데이트, 변경·삭제된 레코드 건너뛰기, 과거 한국어 입력
 갱신, 실제 생성 해시, 적용·복원, 파일 무결성과 안전 오류를 검증합니다.
 **8.8.5 이상 실제 Genesis 게임팩에서의 동작은 아직 검증하지 않았습니다.**
+
+`installer-data/compatibility-anchors.json`은 검증된 Genesis 8.8.4 원본
+138개 ESM에서 생성한 **마스터/EditorID 식별자 메타데이터**입니다. 게임
+플러그인의 본문을 배포하지 않으며, `manifest.json`의
+`compatibility_anchor_sha256`로 손상 여부를 확인합니다. 재생성 시
+`scripts/build_plugin_anchors.py`를 사용하고 새 SHA-256을 매니페스트에
+반영해야 합니다. 실제 게임 원본은 읽기 전용으로 사용합니다.

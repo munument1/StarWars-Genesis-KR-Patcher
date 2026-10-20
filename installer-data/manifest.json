@@ -2,6 +2,7 @@
   "schema": 1,
   "name": "Star Wars Genesis Korean Patcher",
   "target_version": "8.8.4",
+  "compatibility_anchor_sha256": "bc725132d889e28c9a31b0c5c724ab652fea431174a88e46aabee19247f2f2c0",
   "release_state": "RELEASE",
   "semantic_review_remaining": 0,
   "reviewed_items": 6371,
