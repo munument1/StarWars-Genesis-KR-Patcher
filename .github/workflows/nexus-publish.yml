@@ -55,8 +55,8 @@ jobs:
               core.setFailed('Expected a numeric version tag such as v1.2.3.');
               return;
             }
-            if (release.tag_name !== 'v0.2.4') {
-              core.notice('This workflow publishes only the Genesis 8.8.4 patcher v0.2.4.');
+            if (release.tag_name !== 'v0.2.5') {
+              core.notice('This workflow publishes only the Genesis 8.8.4 patcher v0.2.5.');
               return;
             }
             const assetName = `GenesisKRPatcher-${release.tag_name}.zip`;
