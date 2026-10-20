@@ -24,7 +24,7 @@ def check_game_closed():
     if os.name=='nt':
         output=subprocess.run(['tasklist','/FI','IMAGENAME eq Starfield.exe','/FO','CSV','/NH'],capture_output=True,creationflags=subprocess.CREATE_NO_WINDOW,check=True).stdout.lower()
         if b'"starfield.exe"' in output:raise InstallError('Starfield를 종료한 뒤 적용 또는 복원해 주세요.')
-def check_base_content(game,manifest,progress):
+def check_base_content(game,manifest,progress,*,allow_drift=False,drifted=None,observed=None):
     checks=manifest.get('base_content_checks',[])
     if not checks:return {}
     ini=game/'ModOrganizer.ini'
@@ -34,12 +34,18 @@ def check_base_content(game,manifest,progress):
     for r in checks:
         p=data/r['name'];available[r['name'].lower()]=p.exists()
         if not p.exists():
+            if observed is not None:observed[r['name'].lower()]=None
             if r['required']:raise InstallError(f'Required game content missing: {r["name"]}')
             continue
         progress('기본 게임·DLC 파일 확인: '+r['name']);h=hashlib.sha256()
         with p.open('rb') as f:
             for block in iter(lambda:f.read(1024*1024),b''):h.update(block)
-        if h.hexdigest()!=r['sha256']:raise InstallError(f'Base game/DLC version differs from this release: {r["name"]}')
+        actual=h.hexdigest()
+        if observed is not None:observed[r['name'].lower()]=actual
+        if actual!=r['sha256']:
+            if not allow_drift:raise InstallError(f'Base game/DLC version differs from this release: {r["name"]}')
+            if drifted is not None:drifted.append(r['name'].lower())
+            progress('게임/DLC 버전 변경 감지: '+r['name']+' (텍스트 외 작업 비활성화)')
     return available
 
 def providers(game,profile):
@@ -61,14 +67,19 @@ def generate(game,package,stage,profile=None,progress=lambda text:None):
     if stage.is_relative_to(game) or game.is_relative_to(stage):raise InstallError('Preview folder must be separate from the game folder')
     if stage.is_relative_to(package) or package.is_relative_to(stage):raise InstallError('Preview folder must be separate from the package folder')
     manifest=json.loads((package/'manifest.json').read_text(encoding='utf-8'))
-    content=check_base_content(game,manifest,progress)
+    drifted=[];observed={}
+    content=check_base_content(game,manifest,progress,allow_drift=True,drifted=drifted,observed=observed)
     names,_=providers(game,profile or manifest['default_profile']);items=[]
     for index,operation in enumerate(manifest['operations'],1):
         r=dict(operation);target=safe(game,r['target']);current=target.read_bytes() if target.exists() else None
+        if drifted and r['kind']!='text_recipe':
+            r['status']='unsupported_base_version';items.append(r);continue
         if r.get('base_plugin') and not content.get(r['base_plugin'].lower(),True):
             r['status']='content_not_installed';items.append(r);continue
         actual=sha(current) if current is not None else None
         if r['target'].startswith('mods/') and Path(r['target']).parts[1] not in names:
+            if r['kind']=='text_recipe':
+                r['status']='source_mod_not_enabled';items.append(r);continue
             raise InstallError(f'Required mod is disabled or missing: {Path(r["target"]).parts[1]}')
         if actual==r['output_sha256']:
             r['status']='already_applied';r['current_sha256']=actual;items.append(r);continue
@@ -76,34 +87,75 @@ def generate(game,package,stage,profile=None,progress=lambda text:None):
         if r['kind']=='fallback_strings' and provider is not None:
             r['status']='provided_by_enabled_mod';r['provider']=provider;items.append(r);continue
         if r['target'].startswith('mods/') and r['kind']!='fallback_strings' and provider!=Path(r['target']).parts[1]:
+            if r['kind']=='text_recipe':
+                r['status']='source_mod_not_winning';r['provider']=provider;items.append(r);continue
             raise InstallError(f'Enabled mod priority differs: {r["target"]}')
-        upgrade=None
+        upgrade=None;compatible=False
         if actual!=r['input_sha256']:
             if r['kind'] in ('text_recipe','copy'):
                 upgrade=next((entry for entry in r.get('upgrade_from',[]) if entry['input_sha256']==actual),None)
-            if upgrade is None:raise InstallError(f'Unsupported or changed input: {r["target"]}')
+            if upgrade is None:
+                if r['kind']=='text_recipe' and current is not None:
+                    compatible=True
+                else:
+                    raise InstallError(f'Unsupported or changed input: {r["target"]}')
         blob_id=upgrade['blob'] if upgrade else r['blob']
         blob=safe(package,'blobs/'+blob_id).read_bytes()
         if sha(blob)!=blob_id:raise InstallError('Package blob checksum failed')
         if r['kind']=='text_recipe':
             recipe=json.loads(gzip.decompress(blob));mapping={tuple(k) if isinstance(k,list) else k:tuple(v) for k,v in recipe['translations']}
-            output,_=patch_plugin(current,mapping) if recipe['kind']=='plugin' else patch_strings(current,recipe['kind'],mapping)
+            if len(mapping)!=len(recipe['translations']):raise InstallError(f'Duplicate translation keys: {r["target"]}')
+            if compatible:
+                aliases={}
+                # Previously released Korean output can be present inside a
+                # newly updated mod file. Reuse historical *sources* only when
+                # the destination equals the current reviewed translation.
+                for historical in r.get('upgrade_from',[]):
+                    old_blob=safe(package,'blobs/'+historical['blob']).read_bytes()
+                    if sha(old_blob)!=historical['blob']:raise InstallError('Historical recipe checksum failed')
+                    old_recipe=json.loads(gzip.decompress(old_blob))
+                    if old_recipe['kind']!=recipe['kind']:raise InstallError('Historical recipe type mismatch')
+                    for old_key,old_spec in old_recipe['translations']:
+                        old_key=tuple(old_key) if isinstance(old_key,list) else old_key
+                        old_spec=tuple(old_spec)
+                        current_spec=mapping.get(old_key)
+                        if current_spec and len(old_spec) in (2,3) and old_spec[1]==current_spec[1]:
+                            aliases.setdefault(old_key,[]).append(old_spec)
+                output,changes,skipped=(patch_plugin(current,mapping,compatible=True,aliases=aliases) if recipe['kind']=='plugin'
+                                        else patch_strings(current,recipe['kind'],mapping,compatible=True,aliases=aliases))
+                r.update(compatibility='reused_unchanged_sources',matched_changes=len(changes),
+                         skipped_changed=sum(reason=='source_changed' for _,reason in skipped),
+                         skipped_missing=sum(reason=='target_missing' for _,reason in skipped),
+                         skipped_unterminated=sum(reason=='nonterminated' for _,reason in skipped))
+                if not changes:
+                    r['status']='no_matching_changes';r['current_sha256']=actual;items.append(r);continue
+            else:
+                output,_=(patch_plugin(current,mapping) if recipe['kind']=='plugin'
+                           else patch_strings(current,recipe['kind'],mapping))
         elif r['kind']=='font_recipe':
             values=json.loads(gzip.decompress(blob));additions={int(fid):{int(c):{k:base64.b64decode(v) for k,v in g.items()} for c,g in glyphs.items()} for fid,glyphs in values.items()}
             output,_=patch_font_bytes(current,additions)
         elif r['kind']=='hud_recipe':output=patch_hud(current,json.loads(gzip.decompress(blob)))
         else:output=blob
-        if sha(output)!=r['output_sha256']:raise InstallError(f'Generated output checksum failed: {r["target"]}')
+        if compatible:
+            r['release_output_sha256']=r['output_sha256']
+            r['output_sha256']=sha(output)
+        elif sha(output)!=r['output_sha256']:raise InstallError(f'Generated output checksum failed: {r["target"]}')
         path=safe(stage,r['target']);atomic(path,output)
         r.update(status='prepared',current_sha256=actual,staged_relative=r['target']);items.append(r)
         progress(f'{index}/{len(manifest["operations"])}  {Path(r["target"]).name}')
-    report={'game':str(game),'profile':profile or manifest['default_profile'],'package_manifest_sha256':sha((package/'manifest.json').read_bytes()),'base_content_checks':manifest.get('base_content_checks',[]),'operations':items,'state':'prepared','installed':False}
+    report={'game':str(game),'profile':profile or manifest['default_profile'],'package_manifest_sha256':sha((package/'manifest.json').read_bytes()),'base_content_checks':manifest.get('base_content_checks',[]),'base_content_observed_sha256':observed,'base_content_drifted':drifted,'operations':items,'state':'prepared','installed':False}
     save(stage/'prepared.json',report);return report
 
 def apply(stage,progress=lambda text:None):
     check_game_closed()
     stage=Path(stage).resolve();prepared=json.loads((stage/'prepared.json').read_text(encoding='utf-8'));game=Path(prepared['game'])
-    check_base_content(game,prepared,progress)
+    if 'base_content_observed_sha256' in prepared:
+        observed={}
+        check_base_content(game,prepared,progress,allow_drift=True,observed=observed)
+        if observed!=prepared['base_content_observed_sha256']:
+            raise InstallError('Game/DLC files changed after translation preparation')
+    else:check_base_content(game,prepared,progress)
     entries=[r for r in prepared['operations'] if r['status']=='prepared']
     if not entries:raise InstallError('No pending changes')
     names,_=providers(game,prepared['profile'])

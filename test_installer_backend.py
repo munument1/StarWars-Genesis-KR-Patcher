@@ -51,8 +51,40 @@ class InstallerTests(unittest.TestCase):
         steam=self.root/'Steam';(steam/'Data').mkdir(parents=True);(steam/'Data/Test.esm').write_bytes(b'new version')
         self.game.joinpath('ModOrganizer.ini').write_text('gamePath = @ByteArray('+str(steam).replace('\\','\\\\')+')\n',encoding='utf-8')
         p=self.package/'manifest.json';m=json.loads(p.read_text());m['base_content_checks']=[{'name':'Test.esm','required':True,'sha256':backend.sha(b'old version')}];p.write_text(json.dumps(m))
-        with self.assertRaises(backend.InstallError):self.prepare()
+        report=self.prepare()
+        self.assertTrue(report['base_content_drifted'])
+        self.assertEqual([o['status'] for o in report['operations']],['unsupported_base_version','unsupported_base_version'])
         self.assertEqual(self.original.read_bytes(),b'original')
+        with self.assertRaises(backend.InstallError):backend.apply(self.stage)
+
+    def test_changed_base_version_allows_only_verified_text_and_freezes_current_base_hash(self):
+        def table(text):
+            raw=text.encode('utf8')+b'\0'
+            return struct.pack('<IIII',1,len(raw),333,0)+raw
+        english=table('Original English')
+        path=self.game/'mods/TestMod/strings/Name_en.strings';path.parent.mkdir(parents=True);path.write_bytes(english)
+        translated=table('원문 번역')
+        recipe=gzip.compress(json.dumps({'kind':'.strings','translations':[[333,['Original English','원문 번역']]]},ensure_ascii=False).encode())
+        digest=backend.sha(recipe);(self.package/'blobs'/digest).write_bytes(recipe)
+        manifest=json.loads((self.package/'manifest.json').read_text(encoding='utf8'))
+        manifest['operations'].append({'target':'mods/TestMod/strings/Name_en.strings','kind':'text_recipe',
+                                       'blob':digest,'input_sha256':backend.sha(english),
+                                       'output_sha256':backend.sha(translated)})
+        steam=self.root/'Steam';(steam/'Data').mkdir(parents=True)
+        base=steam/'Data'/'Test.esm';base.write_bytes(b'updated base content')
+        (self.game/'ModOrganizer.ini').write_text('gamePath = @ByteArray('+str(steam).replace('\\','\\\\')+')\n',encoding='utf8')
+        manifest['base_content_checks']=[{'name':'Test.esm','required':True,'sha256':backend.sha(b'old base content')}]
+        (self.package/'manifest.json').write_text(json.dumps(manifest),encoding='utf8')
+        prepared=self.prepare()
+        self.assertEqual([o['status'] for o in prepared['operations']],
+                         ['unsupported_base_version','unsupported_base_version','prepared'])
+        base.write_bytes(b'changed AGAIN after preparation')
+        with self.assertRaises(backend.InstallError):backend.apply(self.stage)
+        base.write_bytes(b'updated base content')
+        backup=backend.apply(self.stage)
+        self.assertEqual(path.read_bytes(),translated)
+        backend.restore(backup)
+        self.assertEqual(path.read_bytes(),english)
     def test_copy_upgrade_accepts_only_known_previous_output(self):
         path=self.package/'manifest.json';manifest=json.loads(path.read_text())
         op=manifest['operations'][0]
@@ -77,5 +109,87 @@ class InstallerTests(unittest.TestCase):
         self.prepare();backup=backend.apply(self.stage);self.assertEqual(path.read_bytes(),new)
         backend.restore(backup);self.assertEqual(path.read_bytes(),old)
         path.write_bytes(strings('사용자 수정'))
-        with self.assertRaises(backend.InstallError):self.prepare()
+        report=self.prepare()
+        self.assertEqual(report['operations'][0]['status'],'no_matching_changes')
+        self.assertEqual(path.read_bytes(),strings('사용자 수정'))
+
+    def test_updated_plugin_reuses_matching_field_and_restores_updated_original(self):
+        from test_patch_engine import record,field,group
+        def plugin(first,second,extra=b''):
+            return record(b'TES4',b'')+group(
+                record(b'MISC',field(b'EDID',b'RecordOne\0')+field(b'FULL',first.encode()+b'\0'),1)+
+                record(b'MISC',field(b'EDID',b'RecordTwo\0')+field(b'FULL',second.encode()+b'\0'),2)+extra)
+        original=plugin('Hello','Old text')
+        updated=plugin('Hello','Rewritten upstream',record(b'MISC',field(b'FULL',b'New object\0'),3))
+        mapping={('MISC',1,'FULL',0):('Hello','안녕하세요'),
+                 ('MISC',2,'FULL',0):('Old text','예전 글')}
+        desired,_=backend.patch_plugin(original,mapping)
+        target=self.game/'mods/TestMod/Example.esm';target.write_bytes(updated)
+        recipe=gzip.compress(json.dumps({'kind':'plugin','translations':[[list(k),list(v)] for k,v in mapping.items()]},ensure_ascii=False).encode())
+        blob=backend.sha(recipe);(self.package/'blobs'/blob).write_bytes(recipe)
+        operation={'target':'mods/TestMod/Example.esm','kind':'text_recipe','blob':blob,
+                   'input_sha256':backend.sha(original),'output_sha256':backend.sha(desired)}
+        (self.package/'manifest.json').write_text(json.dumps({'default_profile':'test','operations':[operation]}),encoding='utf-8')
+        report=self.prepare();prepared=report['operations'][0]
+        self.assertEqual(prepared['status'],'prepared')
+        self.assertEqual(prepared['compatibility'],'reused_unchanged_sources')
+        self.assertEqual((prepared['matched_changes'],prepared['skipped_changed'],prepared['skipped_missing']),(1,1,0))
+        self.assertNotEqual(prepared['output_sha256'],operation['output_sha256'])
+        staged=(self.stage/'mods/TestMod/Example.esm').read_bytes()
+        self.assertEqual(backend.sha(staged),prepared['output_sha256'])
+        self.assertIn(b'Rewritten upstream\0',staged)
+        self.assertIn(b'New object\0',staged)
+        self.assertIn('안녕하세요\0'.encode(),staged)
+        backup=backend.apply(self.stage)
+        self.assertEqual(target.read_bytes(),staged)
+        backend.restore(backup)
+        self.assertEqual(target.read_bytes(),updated)
+
+    def test_updated_strings_missing_and_changed_ids_do_not_block_matching_id(self):
+        def strings(items):
+            data=b'';index=b''
+            for key,text in items:
+                raw=text.encode('utf-8')+b'\0'
+                index+=struct.pack('<II',key,len(data));data+=raw
+            return struct.pack('<II',len(items),len(data))+index+data
+        base=strings([(1,'English A'),(2,'English B')])
+        updated=strings([(1,'English A'),(2,'Replaced B'),(3,'New')])
+        desired=strings([(1,'한국어 A'),(2,'한국어 B')])
+        target=self.game/'mods/TestMod/strings/Example_en.strings';target.parent.mkdir(parents=True);target.write_bytes(updated)
+        recipe=gzip.compress(json.dumps({'kind':'.strings','translations':[[1,['English A','한국어 A']],[2,['English B','한국어 B']]]},ensure_ascii=False).encode())
+        blob=backend.sha(recipe);(self.package/'blobs'/blob).write_bytes(recipe)
+        operation={'target':'mods/TestMod/strings/Example_en.strings','kind':'text_recipe','blob':blob,
+                   'input_sha256':backend.sha(base),'output_sha256':backend.sha(desired)}
+        (self.package/'manifest.json').write_text(json.dumps({'default_profile':'test','operations':[operation]}),encoding='utf-8')
+        report=self.prepare();item=report['operations'][0]
+        self.assertEqual(item['matched_changes'],1)
+        generated=(self.stage/'mods/TestMod/strings/Example_en.strings').read_bytes()
+        self.assertEqual({id:text for id,text,_ in backend.patch_strings.__globals__['read_strings'](generated,'.strings')},
+                         {1:'한국어 A',2:'Replaced B',3:'New'})
+        self.assertEqual(item['output_sha256'],backend.sha(generated))
+
+    def test_disabled_or_shadowed_mod_text_recipe_does_not_block_other_mods(self):
+        def table(text):
+            raw=text.encode()+b'\0'
+            return struct.pack('<IIII',1,len(raw),12,0)+raw
+        base=table('English');translated=table('한국어')
+        blob_raw=gzip.compress(json.dumps({'kind':'.strings','translations':[[12,['English','한국어']]]},ensure_ascii=False).encode())
+        blob=backend.sha(blob_raw);(self.package/'blobs'/blob).write_bytes(blob_raw)
+        def operation(name):
+            return {'target':f'mods/{name}/strings/Name_en.strings','kind':'text_recipe','blob':blob,
+                    'input_sha256':backend.sha(base),'output_sha256':backend.sha(translated)}
+        source=self.game/'mods/TestMod/strings/Name_en.strings';source.parent.mkdir(parents=True);source.write_bytes(base)
+        shadow=self.game/'mods/OtherMod/strings/Name_en.strings';shadow.parent.mkdir(parents=True);shadow.write_bytes(base)
+        manifest={'default_profile':'test','operations':[operation('AbsentMod'),operation('TestMod')]}
+        (self.package/'manifest.json').write_text(json.dumps(manifest),encoding='utf8')
+        report=self.prepare()
+        self.assertEqual([r['status'] for r in report['operations']],['source_mod_not_enabled','prepared'])
+        # Fresh preview for an enabled higher-priority mod that wins the same
+        # relative file; the patcher must not edit the shadowed copy.
+        (self.game/'profiles/test/modlist.txt').write_text('+OtherMod\n+TestMod\n',encoding='utf8')
+        (self.stage/'prepared.json').unlink()
+        self.stage.joinpath('mods/TestMod/strings/Name_en.strings').unlink()
+        report=self.prepare()
+        self.assertEqual([r['status'] for r in report['operations']],['source_mod_not_enabled','source_mod_not_winning'])
+        self.assertEqual(source.read_bytes(),base)
 if __name__=='__main__':unittest.main()
