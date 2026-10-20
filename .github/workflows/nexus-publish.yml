@@ -1,11 +1,6 @@
 name: Publish patcher to Nexus Mods
 
 on:
-  push:
-    branches:
-      - nexus-release-v0.2.5-once
-    paths:
-      - .github/workflows/nexus-publish.yml
   workflow_dispatch:
     inputs:
       tag:
