@@ -12,7 +12,7 @@ class ReleaseMetadataTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             package = Path(directory)
             (package / 'manifest.json').write_text(
-                json.dumps({'target_version': '8.8.32', 'version': '0.2.4'}), encoding='utf-8'
+                json.dumps({'target_version': '8.8.32', 'version': '0.2.5'}), encoding='utf-8'
             )
             with patch.object(patcher_app, 'package_dir', return_value=package):
                 with self.assertRaisesRegex(ValueError, 'Package version'):
@@ -29,7 +29,7 @@ class ReleaseMetadataTests(unittest.TestCase):
                     patcher_app.check_release_metadata()
 
     def test_release_metadata_accepts_supported_versions(self):
-        manifest = {'target_version': '8.8.4', 'version': '0.2.4'}
+        manifest = {'target_version': '8.8.4', 'version': '0.2.5'}
         with tempfile.TemporaryDirectory() as directory:
             package = Path(directory)
             (package / 'manifest.json').write_text(json.dumps(manifest), encoding='utf-8')
@@ -41,7 +41,7 @@ class ReleaseMetadataTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             package=Path(directory)
             payload=b'{"schema":1}'
-            manifest={'target_version':'8.8.4','version':'0.2.4',
+            manifest={'target_version':'8.8.4','version':'0.2.5',
                       'compatibility_anchor_sha256':hashlib.sha256(payload).hexdigest()}
             (package/'manifest.json').write_text(json.dumps(manifest),encoding='utf-8')
             with patch.object(patcher_app,'package_dir',return_value=package):

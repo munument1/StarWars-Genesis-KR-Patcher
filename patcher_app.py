@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import filedialog,messagebox,ttk
 from installer_backend import generate,apply,restore,sha,safe
 
-PATCHER_VERSION='0.2.4'
+PATCHER_VERSION='0.2.5'
 GENESIS_VERSION='8.8.4'
 
 def package_dir():
