@@ -39,8 +39,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v0.2.6 --repo "$env:GITHUB_REPOSITORY" *> $null
-          if ($LASTEXITCODE -eq 0) { throw "v0.2.6 already published: refusing to overwrite" }
+          $existing = gh release list --repo "$env:GITHUB_REPOSITORY" --json tagName --limit 100 | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "Could not check existing GitHub releases" }
+          if ($existing.tagName -contains "v0.2.6") { throw "v0.2.6 already published: refusing to overwrite" }
       - name: Publish verified GitHub release (Nexus upload remains manual)
         shell: pwsh
         env:
