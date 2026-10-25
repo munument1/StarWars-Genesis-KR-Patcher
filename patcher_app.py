@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import filedialog,messagebox,ttk
 from installer_backend import generate,apply,restore,sha,safe
 
-PATCHER_VERSION='0.2.5'
+PATCHER_VERSION='0.2.6'
 GENESIS_VERSION='8.8.4'
 
 def package_dir():
@@ -103,7 +103,7 @@ class App:
         self.root.destroy()
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--self-check');parser.add_argument('--generate-only',nargs=2,metavar=('GAME','STAGE'))
+    parser=argparse.ArgumentParser();parser.add_argument('--self-check');parser.add_argument('--gui-self-check');parser.add_argument('--generate-only',nargs=2,metavar=('GAME','STAGE'))
     args=parser.parse_args()
     if args.self_check:
         package=package_dir();manifest=check_release_metadata()
@@ -114,5 +114,19 @@ def main():
     if args.generate_only:
         check_release_metadata()
         generate(args.generate_only[0],package_dir(),args.generate_only[1]);return
+    if args.gui_self_check:
+        # Exercise Tcl initialization and the real Tk widget tree in the frozen EXE.
+        check_release_metadata()
+        root=tk.Tk()
+        try:
+            root.withdraw()
+            App(root)
+            root.update_idletasks()
+            result={'version':PATCHER_VERSION,'tcl':str(root.tk.call('info','patchlevel')),
+                    'tk':str(root.tk.call('package','require','Tk')),'gui_initialized':True}
+            Path(args.gui_self_check).write_text(json.dumps(result),encoding='utf-8')
+        finally:
+            root.destroy()
+        return
     root=tk.Tk();App(root);root.mainloop()
 if __name__=='__main__':main()
