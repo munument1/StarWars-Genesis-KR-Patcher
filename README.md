@@ -1,15 +1,15 @@
 # Star Wars Genesis 한국어 패처
 
-**Star Wars Genesis 8.8.4용 Windows 한국어 패처 v0.2.5**입니다.
+**Star Wars Genesis 8.8.4용 Windows 한국어 패처 v0.2.6**입니다. 빌드 도구와 실제 Tkinter GUI 실행 검증을 개선했습니다.
 기존 SST 번역과 추가 번역 검토 결과를 반영하며, 사용자의 플러그인에서
 번역된 파일을 생성한 다음 백업하고 적용합니다. Python, Java, xTranslator,
 Gemini API 키를 별도로 설치하거나 입력할 필요가 없습니다.
 
-v0.2.5는 Genesis 8.8.4 번역을 바탕으로 업데이트된 플러그인에서 기존 번역을 안전하게 재사용하는 버전입니다. 이전 8.8.32용 v0.2.3의 [괄호 병기·캐릭터 배경 검수](translation-review/v0.2.3-release/README.md), [용어 검수·상호작용 수정](docs/terminology-complete-patch.md), [기존 한패 활용](docs/donor-reuse.md)을 바탕으로 합니다. 전체 퀘스트와 대사의 실제 플레이 검증은 완료되지 않았습니다.
+v0.2.6은 v0.2.5의 Genesis 8.8.4 번역과 업데이트 호환성 기능을 유지하면서 Windows 실행 파일의 Tcl/Tk 빌드·검증 경로를 수정했습니다. 이전 8.8.32용 v0.2.3의 [괄호 병기·캐릭터 배경 검수](translation-review/v0.2.3-release/README.md), [용어 검수·상호작용 수정](docs/terminology-complete-patch.md), [기존 한패 활용](docs/donor-reuse.md)을 바탕으로 합니다. 전체 퀘스트와 대사의 실제 플레이 검증은 완료되지 않았습니다.
 
 ## 다운로드와 설치
 
-1. [v0.2.5 정식 릴리즈](https://github.com/munument1/StarWars-Genesis-KR-Patcher/releases/tag/v0.2.5)에서 `GenesisKRPatcher-v0.2.5.zip`을 내려받아 압축을 풉니다.
+1. [v0.2.6 정식 릴리스](https://github.com/munument1/StarWars-Genesis-KR-Patcher/releases/tag/v0.2.6)에서 `GenesisKRPatcher-v0.2.6.zip`을 내려받아 압축을 풉니다. 릴리스 페이지가 없다면 배포 검증 중이므로 v0.2.5를 대신 설치하지 마세요.
 2. 실행 중인 Starfield를 완전히 종료합니다.
 3. `GenesisKRPatcher.exe`를 실행해 제네시스의 **Game 폴더**를 선택합니다.
    `mods`, `profiles`, `ModOrganizer.ini`가 들어 있는 폴더입니다.
@@ -40,7 +40,7 @@ v0.2.5는 Genesis 8.8.4 번역을 바탕으로 업데이트된 플러그인에�
 나머지 3,286건은 빈 문자열 640, 런타임 변수/태그 261, 기술용 식별자 1,511, 구조 재검증 후 원문 유지로 판정한 874건입니다.
 원문 불일치 때문에 잘못된 구번역을 강제 적용하지 않습니다. 따라서 8.8.4 대응은 **완역을 의미하지 않습니다.**
 874건은 `FACT`·`FLST` 등의 내부·콘솔용 이름과 숫자·원소 기호, 표시 참조 미확인 기술 문자열입니다. **이번에는 추가 번역하지 않고 그대로 보존합니다.** 자세한 수치와 보류 기준은 [8.8.4 Strings 번역 반영·검수 상태](docs/genesis-8.8.4-strings-status.md)를 참고하세요.
-설치·복원 및 번역 자료의 구조 검증을 통과한 **v0.2.5 정식 배포판**입니다. 단, 전체 퀘스트를 끝까지 진행한 인게임 검수를 완료했다는 뜻은 아닙니다.
+v0.2.5의 Tcl/Tk 실행 오류를 수정한 **v0.2.6**입니다. 정식 릴리스는 Windows 빌드 및 EXE의 실제 Tkinter GUI 초기화 검사를 통과했을 때만 생성됩니다. 단, 전체 퀘스트를 끝까지 진행한 인게임 검수를 완료했다는 뜻은 아닙니다.
 
 패처의 적용 대상은 **제네시스 `mods` 폴더와 Game 폴더의 BAT**입니다.
 Steam 본편 `Starfield/Data`는 버전 확인을 위해 읽기만 하며 수정하지 않습니다.
@@ -56,7 +56,7 @@ Steam 본편 `Starfield/Data`는 버전 확인을 위해 읽기만 하며 수정
 ## 확인한 범위
 
 이전 8.8.32용 v0.2.3에서 메뉴 번역, 한글 폰트 출력, 원형 HUD의 행성 이름 표시를
-게임에서 확인했습니다. 8.8.4용 빌드는 별도 검증 대상이며, 검사 완료 여부는
+게임에서 확인했습니다. 8.8.4용 빌드는 별도 검증 대상이며, GUI 부팅과 검사 완료 여부는
 릴리즈에 게시되는 테스트 및 패키지 검증 결과를 기준으로 판단해 주세요.
 
 전체 퀘스트와 대사를 플레이 검증한 릴리즈는 아닙니다. 기존 SST 전체의 사람 교열,
@@ -66,7 +66,7 @@ xTranslator와의 완전한 출력 대조, 모든 PEX 및 SWF 내부 문구 검�
 
 ## 소스 실행 및 빌드
 
-> **v0.2.5 기능:** 업데이트 후 변경되지 않은 텍스트 번역을 재사용합니다.
+> **v0.2.5부터 지원한 기능:** 업데이트 후 변경되지 않은 텍스트 번역을 재사용합니다.
 > 실제 후속 Genesis 버전에서 모든 모드나 인게임 동작을 검증했다는 뜻은 아닙니다.
 > 지원 범위와 안전장치는 [업데이트 호환성 패치 설계](docs/update-compatible-patching.md)를 참고하세요.
 

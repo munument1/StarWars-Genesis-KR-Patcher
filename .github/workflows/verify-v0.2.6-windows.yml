@@ -1,0 +1,43 @@
+name: Verify v0.2.6 Windows GUI candidate
+
+on:
+  push:
+    branches:
+      - fix/v026-tkinter-release-gates
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-windows-exe:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install PyInstaller and validate build Python Tcl/Tk
+        shell: pwsh
+        run: |
+          python -m pip install -r requirements-build.txt
+          if ($LASTEXITCODE -ne 0) { throw "PyInstaller installation failed" }
+          python -c "import tkinter as tk; r=tk.Tk(); r.withdraw(); assert r.tk.call('info','patchlevel'); r.destroy()"
+          if ($LASTEXITCODE -ne 0) { throw "Build Python Tcl/Tk is unusable" }
+      - name: Test source, build EXE, run frozen Tcl/Tk smoke tests and verify ZIP
+        shell: pwsh
+        run: |
+          python scripts/build_release_candidate.py
+          if ($LASTEXITCODE -ne 0) { throw "Windows EXE release candidate validation FAILED" }
+      - name: Upload *unpublished* verified Windows candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: v0.2.6-windows-candidate
+          path: |
+            GenesisKRPatcher-v0.2.6.zip
+            SHA256SUMS-v0.2.6.txt
+          if-no-files-found: error
