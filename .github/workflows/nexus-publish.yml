@@ -1,6 +1,11 @@
 name: Publish patcher to Nexus Mods
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/nexus-publish.yml'
   workflow_dispatch:
     inputs:
       tag:
@@ -21,10 +26,12 @@ concurrency:
 
 jobs:
   publish:
+    # One-shot push after this exact authorized commit; future edits cannot auto-upload.
     if: >-
-      github.event_name != 'workflow_run' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_repository.full_name == github.repository)
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' &&
+       github.ref == 'refs/heads/main' &&
+       github.event.head_commit.message == 'release: sync verified v0.2.6 to Nexus')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -35,7 +42,7 @@ jobs:
         id: release
         uses: actions/github-script@v7
         env:
-          REQUESTED_TAG: ${{ inputs.tag }}
+          REQUESTED_TAG: ${{ inputs.tag || 'v0.2.6' }}
         with:
           script: |
             const repo = context.repo;
@@ -55,8 +62,8 @@ jobs:
               core.setFailed('Expected a numeric version tag such as v1.2.3.');
               return;
             }
-            if (release.tag_name !== 'v0.2.5') {
-              core.notice('This workflow publishes only the Genesis 8.8.4 patcher v0.2.5.');
+            if (release.tag_name !== 'v0.2.6') {
+              core.notice('This workflow publishes only the verified Genesis 8.8.4 patcher v0.2.6.');
               return;
             }
             const assetName = `GenesisKRPatcher-${release.tag_name}.zip`;
