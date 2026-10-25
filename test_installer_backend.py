@@ -36,7 +36,7 @@ class InstallerTests(unittest.TestCase):
         self.prepare();real=backend.atomic;failed=False
         def fail_once(path,raw):
             nonlocal failed
-            if Path(path)==self.new and not failed:failed=True;raise OSError('simulated failure')
+            if Path(path).name=='new_en.strings' and not failed:failed=True;raise OSError('simulated failure')
             return real(path,raw)
         with patch.object(backend,'atomic',side_effect=fail_once):
             with self.assertRaises(OSError):backend.apply(self.stage)
