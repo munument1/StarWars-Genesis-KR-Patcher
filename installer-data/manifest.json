@@ -1868,7 +1868,7 @@
     }
   ],
   "note": "8.8.4 patcher: restores existing SST/GitHub translations and reviewed ESM additions. Newly added 8.8.4 DLC Strings/dialogue remain partially untranslated and require additional QA.",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "verified_in_game": false,
   "donor_reuse": {
     "comparison_sha256": "fa8ce521bd61266a298e5f5a41f0f7ae0668918a36a07fe9dfbcbb6f0af191af",
