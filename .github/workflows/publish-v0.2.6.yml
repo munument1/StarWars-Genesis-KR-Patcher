@@ -1,0 +1,50 @@
+name: Publish verified v0.2.6 Windows patcher
+
+# New v0.2.6 workflow is invoked once on its initial merge to main.
+# It rebuilds and reruns ALL checks; no failed test can reach publishing.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-v0.2.6.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verified-release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install PyInstaller and verify Tcl/Tk
+        shell: pwsh
+        run: |
+          python -m pip install -r requirements-build.txt
+          if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed" }
+          python -c "import tkinter as tk; r=tk.Tk(); r.withdraw(); assert r.tk.call('info','patchlevel'); r.destroy()"
+          if ($LASTEXITCODE -ne 0) { throw "Build Python Tcl/Tk failed" }
+      - name: Mandatory tests, frozen EXE GUI startup and archive integrity
+        shell: pwsh
+        run: |
+          python scripts/build_release_candidate.py
+          if ($LASTEXITCODE -ne 0) { throw "DO NOT PUBLISH: Windows build or GUI verification failed" }
+      - name: Reject overwriting an existing release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v0.2.6 --repo "$env:GITHUB_REPOSITORY" *> $null
+          if ($LASTEXITCODE -eq 0) { throw "v0.2.6 already published: refusing to overwrite" }
+      - name: Publish verified GitHub release (Nexus upload remains manual)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v0.2.6 GenesisKRPatcher-v0.2.6.zip SHA256SUMS-v0.2.6.txt --repo "$env:GITHUB_REPOSITORY" --target "$env:GITHUB_SHA" --title "Star Wars Genesis 8.8.4 한국어 패처 v0.2.6" --notes-file RELEASE_NOTES.md
+          if ($LASTEXITCODE -ne 0) { throw "GitHub release publish failed" }
