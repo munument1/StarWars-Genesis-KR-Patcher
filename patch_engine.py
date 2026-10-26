@@ -1,5 +1,5 @@
 """Lossless Starfield text patching primitives. No filesystem writes here."""
-import re,struct,zlib
+import hashlib,re,struct,zlib
 from collections import Counter
 
 class PatchError(ValueError):pass
@@ -47,6 +47,39 @@ def encode_field(name,value):
     name=name.encode('ascii');length=len(value)
     if length>65535:return b'XXXX\x04\0'+struct.pack('<I',length)+name+b'\0\0'+value
     return name+struct.pack('<H',length)+value
+
+def plugin_content_sha256(data):
+    """Hash every plugin byte except DEFLATE encoding and dependent sizes (v1).
+
+    Preserve record order, flags, headers and all field bytes. Only decompress
+    record bodies and recalculate enclosing lengths, so zlib and zlib-ng can
+    verify the same release without trusting a runtime-specific compressor.
+    """
+    if len(data)<24 or data[:4]!=b'TES4':raise PatchError('Not a plugin')
+    def walk(start,end):
+        output=[];pos=start
+        while pos<end:
+            if pos+24>end:raise PatchError('Truncated record header')
+            header=data[pos:pos+24];size=struct.unpack_from('<I',header,4)[0]
+            if header[:4]==b'GRUP':
+                if size<24 or pos+size>end:raise PatchError('Invalid group size')
+                body=walk(pos+24,pos+size);pos+=size
+                output.append(header[:4]+struct.pack('<I',24+len(body))+header[8:]+body)
+                continue
+            finish=pos+24+size
+            if finish>end:raise PatchError('Record outside group')
+            body=data[pos+24:finish];pos=finish
+            if struct.unpack_from('<I',header,8)[0]&0x40000:
+                if len(body)<4:raise PatchError('Truncated compressed record')
+                expected=struct.unpack_from('<I',body)[0];stream=zlib.decompressobj()
+                plain=stream.decompress(body[4:])+stream.flush()
+                if not stream.eof or stream.unused_data or stream.unconsumed_tail:
+                    raise PatchError('Invalid compressed record stream')
+                if len(plain)!=expected:raise PatchError('Decompressed size mismatch')
+                body=plain
+            output.append(header[:4]+struct.pack('<I',len(body))+header[8:]+body)
+        return b''.join(output)
+    return hashlib.sha256(b'Genesis plugin content v1\0'+walk(0,len(data))).hexdigest()
 
 def patch_plugin(data,translations,*,compatible=False,aliases=None):
     """Map (record, FormID integer, field, index) to (source, translation).

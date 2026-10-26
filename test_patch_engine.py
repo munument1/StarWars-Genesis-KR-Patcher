@@ -1,4 +1,5 @@
 import struct,unittest,zlib
+from unittest.mock import patch
 from patch_engine import PatchError,patch_plugin,patch_strings,read_strings
 
 def record(name,body,fid=0,flags=0):
@@ -11,6 +12,45 @@ def strings(kind):
     return struct.pack('<II',1,len(block))+struct.pack('<II',42,0)+block
 
 class EngineTests(unittest.TestCase):
+    def test_swf_content_digest_preserves_header_body_and_rejects_corruption(self):
+        from preserve_font_resources import swf_content_sha256
+        body=b'opaque body'*100;header=b'CWS\x0a'+struct.pack('<I',len(body)+8)
+        raw=header+zlib.compress(body,9)
+        self.assertEqual(swf_content_sha256(raw),swf_content_sha256(header+zlib.compress(body,0)))
+        self.assertNotEqual(swf_content_sha256(raw),swf_content_sha256(header+zlib.compress(body.replace(b'opaque',b'OPAQUE'))))
+        self.assertNotEqual(swf_content_sha256(raw),swf_content_sha256(raw[:3]+b'\x0b'+raw[4:]))
+        for bad in (raw+b'junk',raw[:-1],b'CWS\x0a'+struct.pack('<I',1)+raw[8:],b'bad'):
+            with self.assertRaises((ValueError,zlib.error)):swf_content_sha256(bad)
+
+    def test_plugin_content_digest_ignores_only_compression_and_dependent_sizes(self):
+        from patch_engine import plugin_content_sha256
+        body=field(b'EDID',b'Test\0')+field(b'FULL',b'Hello\0')+field(b'ZZZZ',b'opaque'*100)
+        original=record(b'TES4',b'')+group(group(record(b'MISC',body,1,0x40000)))
+        mapping={('MISC',1,'FULL',0):('Hello','안녕하세요')}
+        expected,_=patch_plugin(original,mapping)
+        compress=zlib.compress
+        with patch('patch_engine.zlib.compress',side_effect=lambda data:compress(data,0)):
+            variant,_=patch_plugin(original,mapping)
+        self.assertNotEqual(expected,variant)
+        self.assertEqual(plugin_content_sha256(expected),plugin_content_sha256(variant))
+        for changed in (expected.replace(b'TES4',b'TES3',1),
+                        record(b'TES4',b'header edit')+expected[24:],
+                        record(b'TES4',b'')+group(group(record(b'MISC',body.replace(b'opaque',b'OPAQUE'),1,0x40000))),
+                        record(b'TES4',b'')+group(group(record(b'MISC',body,2,0x40000)))):
+            try:digest=plugin_content_sha256(changed)
+            except PatchError:continue
+            self.assertNotEqual(plugin_content_sha256(expected),digest)
+
+    def test_plugin_content_digest_rejects_corrupt_compressed_records(self):
+        from patch_engine import plugin_content_sha256
+        body=field(b'FULL',b'Hi\0');compressed=zlib.compress(body)
+        for payload in (struct.pack('<I',len(body)+1)+compressed,
+                        struct.pack('<I',len(body))+compressed+b'junk',
+                        struct.pack('<I',len(body))+compressed[:-1],b'bad'):
+            raw=record(b'TES4',b'')+record(b'MISC',payload,1,0)
+            raw=raw[:32]+struct.pack('<I',0x40000)+raw[36:]
+            with self.assertRaises((PatchError,zlib.error)):plugin_content_sha256(raw)
+
     def test_compression_nested_group_extended_and_unknown_fields(self):
         body=field(b'EDID',b'test\0')+field(b'ZZZZ',bytes(range(255)))+field(b'FULL',b'Hello\0')
         source=record(b'TES4',field(b'HEDR',b'123456789012'))+group(group(record(b'MISC',body,0x123,0x40000)))

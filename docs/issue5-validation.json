@@ -1,0 +1,26 @@
+{
+  "unit_tests": {
+    "python_3_13": 40,
+    "python_3_14": 40
+  },
+  "full_generation": {
+    "py313": {
+      "prepared": 183,
+      "compression_variants": 82
+    },
+    "py314": {
+      "prepared": 183,
+      "compression_variants": 0
+    },
+    "frozen": {
+      "prepared": 183,
+      "compression_variants": 82
+    }
+  },
+  "frozen_matches_source_byte_for_byte": true,
+  "sandbox_applied": 183,
+  "sandbox_restored": 183,
+  "live_targets_unchanged": 183,
+  "frozen_tk_gui_check": true,
+  "zip_integrity_check": true
+}

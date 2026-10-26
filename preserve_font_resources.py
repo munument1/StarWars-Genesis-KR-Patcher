@@ -1,6 +1,18 @@
 """Combine converted Korean outlines with original font glyphs and UI resources."""
-import struct,zlib
+import hashlib,struct,zlib
 from pathlib import Path
+
+def swf_content_sha256(raw):
+    """Hash the exact SWF header and body independent of DEFLATE encoding (v1)."""
+    if len(raw)<8 or raw[:3] not in (b'CWS',b'CFX',b'FWS',b'GFX'):
+        raise ValueError('Invalid SWF header')
+    if raw[:3] in (b'CWS',b'CFX'):
+        stream=zlib.decompressobj();body=stream.decompress(raw[8:])+stream.flush()
+        if not stream.eof or stream.unused_data or stream.unconsumed_tail:
+            raise ValueError('Invalid compressed SWF stream')
+    else:body=raw[8:]
+    if len(body)+8!=struct.unpack_from('<I',raw,4)[0]:raise ValueError('SWF size mismatch')
+    return hashlib.sha256(b'Genesis SWF content v1\0'+raw[:8]+body).hexdigest()
 def tags_bytes(data):
     if data[:3] in (b'CWS',b'CFX'):data=data[:8]+zlib.decompress(data[8:])
     bits=data[8]>>3;pos=8+(5+4*bits+7)//8+4;result=[]

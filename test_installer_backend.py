@@ -5,6 +5,77 @@ from types import SimpleNamespace
 import installer_backend as backend
 
 class InstallerTests(unittest.TestCase):
+    def test_swf_compression_variants_verify_full_content_apply_and_restore(self):
+        import base64,zlib
+        from preserve_font_resources import swf_content_sha256,patch_font_bytes
+        from hud_layout import patch_hud
+        body=b'\0'+b'\0'*4+struct.pack('<H',(37<<6)|4)+b'\x01\0AB'+b'\0\0'
+        original=b'CWS\x0a'+struct.pack('<I',len(body)+8)+zlib.compress(body,1)
+        for kind in ('font_recipe','hud_recipe'):
+            with self.subTest(kind=kind):
+                target=f'mods/TestMod/{kind}.swf';source=self.game/target;source.write_bytes(original)
+                recipe={} if kind=='font_recipe' else {'replacements':[{'tag':37,'id':1,
+                    'input_sha256':backend.sha(b'\x01\0AB'),'body':base64.b64encode(b'\x01\0CD').decode()}]}
+                expected=patch_font_bytes(original,{})[0] if kind=='font_recipe' else patch_hud(original,recipe)
+                raw=gzip.compress(json.dumps(recipe).encode());blob=backend.sha(raw)
+                (self.package/'blobs'/blob).write_bytes(raw)
+                op={'target':target,'kind':kind,'blob':blob,'input_sha256':backend.sha(original),
+                    'output_sha256':backend.sha(expected)}
+                def write():
+                    (self.package/'manifest.json').write_text(json.dumps({'default_profile':'test','operations':[op]}))
+                compress=zlib.compress
+                with patch('preserve_font_resources.zlib.compress',side_effect=lambda data,level=-1:compress(data,0)):
+                    write()
+                    with self.assertRaisesRegex(backend.InstallError,'Generated output checksum failed'):self.prepare()
+                    op['output_swf_content_sha256']='0'*64;write()
+                    with self.assertRaisesRegex(backend.InstallError,'Generated output checksum failed'):self.prepare()
+                    op['output_swf_content_sha256']=swf_content_sha256(expected);write()
+                    prepared=self.prepare()['operations'][0]
+                self.assertTrue(prepared['compression_variant'])
+                staged=(self.stage/target).read_bytes();self.assertNotEqual(staged,expected)
+                self.assertEqual(swf_content_sha256(staged),swf_content_sha256(expected))
+                backup=backend.apply(self.stage);self.assertEqual(source.read_bytes(),staged)
+                backend.restore(backup);self.assertEqual(source.read_bytes(),original)
+
+    def test_compression_variant_requires_pinned_content_and_apply_restore_byte_hashes(self):
+        import zlib
+        from test_patch_engine import record,field,group
+        from patch_engine import patch_plugin,plugin_content_sha256
+        original=record(b'TES4',b'')+group(record(b'MISC',field(b'FULL',b'Hello\0')+field(b'ZZZZ',b'opaque'*100),1,0x40000))
+        mapping={('MISC',1,'FULL',0):('Hello','안녕하세요')}
+        expected,_=patch_plugin(original,mapping)
+        target='mods/TestMod/Example.esm';source=self.game/target;source.write_bytes(original)
+        recipe=gzip.compress(json.dumps({'kind':'plugin','translations':[[list(k),list(v)] for k,v in mapping.items()]},ensure_ascii=False).encode())
+        blob=backend.sha(recipe);(self.package/'blobs'/blob).write_bytes(recipe)
+        operation={'target':target,'kind':'text_recipe','blob':blob,'input_sha256':backend.sha(original),
+                   'output_sha256':backend.sha(expected)}
+        manifest={'default_profile':'test','operations':[operation]}
+        def write():
+            (self.package/'manifest.json').write_text(json.dumps(manifest),encoding='utf-8')
+        compress=zlib.compress
+        with patch('patch_engine.zlib.compress',side_effect=lambda data:compress(data,0)):
+            for digest in (None,'0'*64):
+                if digest is None:operation.pop('output_plugin_content_sha256',None)
+                else:operation['output_plugin_content_sha256']=digest
+                write()
+                with self.assertRaisesRegex(backend.InstallError,'Generated output checksum failed'):self.prepare()
+                self.assertFalse((self.stage/'prepared.json').exists())
+            operation['output_plugin_content_sha256']=plugin_content_sha256(expected);write()
+            prepared=self.prepare()['operations'][0]
+        staged=(self.stage/target).read_bytes()
+        self.assertNotEqual(staged,expected)
+        self.assertEqual(plugin_content_sha256(staged),operation['output_plugin_content_sha256'])
+        self.assertTrue(prepared['compression_variant'])
+        self.assertEqual(prepared['output_sha256'],backend.sha(staged))
+        self.assertEqual(prepared['release_output_sha256'],backend.sha(expected))
+        # Integrity enforcement still uses exact bytes after content verification.
+        (self.stage/target).write_bytes(staged+b'tampered')
+        with self.assertRaises(backend.InstallError):backend.apply(self.stage)
+        self.assertEqual(source.read_bytes(),original)
+        (self.stage/target).write_bytes(staged)
+        backup=backend.apply(self.stage);self.assertEqual(source.read_bytes(),staged)
+        backend.restore(backup);self.assertEqual(source.read_bytes(),original)
+
     def setUp(self):
         process_check=patch.object(backend,'check_game_closed',return_value=None);process_check.start();self.addCleanup(process_check.stop)
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)

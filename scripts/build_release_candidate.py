@@ -35,10 +35,10 @@ def main():
         run(sys.executable, "patcher_app.py", "--self-check", source_check)
 
         manifest = json.loads((ROOT / "installer-data" / "manifest.json").read_text(encoding="utf-8"))
-        if manifest.get("version") != "0.2.6" or manifest.get("target_version") != "8.8.4":
-            raise RuntimeError("Unexpected v0.2.6 manifest metadata")
+        if manifest.get("version") != "0.2.7" or manifest.get("target_version") != "8.8.4":
+            raise RuntimeError("Unexpected v0.2.7 manifest metadata")
         if manifest.get("release_state") != "RELEASE" or len(manifest.get("operations", [])) != 183:
-            raise RuntimeError("Invalid expected v0.2.6 translation payload")
+            raise RuntimeError("Invalid expected v0.2.7 translation payload")
         output_version = "v" + manifest["version"]
 
         run(sys.executable, "-m", "PyInstaller", "--clean", "--noconfirm", "--onefile",
@@ -76,7 +76,7 @@ def main():
         (ROOT / ("SHA256SUMS-" + output_version + ".txt")).write_text(
             digest + "  " + output.name + "\n", encoding="ascii"
         )
-        print("v0.2.6 candidate verified: payload, frozen Tcl/Tk GUI, ZIP, SHA-256")
+        print("v0.2.7 candidate verified: payload, frozen Tcl/Tk GUI, ZIP, SHA-256")
 
 
 if __name__ == "__main__":
