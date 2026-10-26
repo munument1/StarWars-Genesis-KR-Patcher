@@ -1,6 +1,6 @@
-name: Publish verified v0.2.6 Windows patcher
+name: Publish verified v0.2.7 Windows patcher
 
-# New v0.2.6 workflow is invoked once on its initial merge to main.
+# New v0.2.7 workflow is invoked once on its initial merge to main.
 # It rebuilds and reruns ALL checks; no failed test can reach publishing.
 on:
   push:
@@ -41,11 +41,11 @@ jobs:
         run: |
           $existing = gh release list --repo "$env:GITHUB_REPOSITORY" --json tagName --limit 100 | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { throw "Could not check existing GitHub releases" }
-          if ($existing.tagName -contains "v0.2.6") { throw "v0.2.6 already published: refusing to overwrite" }
+          if ($existing.tagName -contains "v0.2.7") { throw "v0.2.7 already published: refusing to overwrite" }
       - name: Publish verified GitHub release (Nexus upload remains manual)
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v0.2.6 GenesisKRPatcher-v0.2.6.zip SHA256SUMS-v0.2.6.txt --repo "$env:GITHUB_REPOSITORY" --target "$env:GITHUB_SHA" --title "Star Wars Genesis 8.8.4 한국어 패처 v0.2.6" --notes-file RELEASE_NOTES.md
+          gh release create v0.2.7 GenesisKRPatcher-v0.2.7.zip SHA256SUMS-v0.2.7.txt --repo "$env:GITHUB_REPOSITORY" --target "$env:GITHUB_SHA" --title "Star Wars Genesis 8.8.4 한국어 패처 v0.2.7" --notes-file RELEASE_NOTES.md
           if ($LASTEXITCODE -ne 0) { throw "GitHub release publish failed" }
