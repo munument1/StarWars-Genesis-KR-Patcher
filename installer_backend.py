@@ -1,9 +1,9 @@
 """Guarded generation and transactional backup/apply/restore for the local patcher."""
 import base64,gzip,hashlib,json,os,re,subprocess,uuid
 from pathlib import Path
-from patch_engine import patch_plugin,patch_strings
+from patch_engine import patch_plugin,patch_strings,plugin_content_sha256
 from plugin_anchors import remap_translations
-from preserve_font_resources import patch_font_bytes
+from preserve_font_resources import patch_font_bytes,swf_content_sha256
 from hud_layout import patch_hud
 
 class InstallError(ValueError):pass
@@ -161,7 +161,19 @@ def generate(game,package,stage,profile=None,progress=lambda text:None):
         if compatible:
             r['release_output_sha256']=r['output_sha256']
             r['output_sha256']=sha(output)
-        elif sha(output)!=r['output_sha256']:raise InstallError(f'Generated output checksum failed: {r["target"]}')
+        elif sha(output)!=r['output_sha256']:
+            verified=False
+            if r['kind']=='text_recipe' and recipe['kind']=='plugin' and r.get('output_plugin_content_sha256'):
+                verified=plugin_content_sha256(output)==r['output_plugin_content_sha256']
+            elif r['kind'] in ('font_recipe','hud_recipe') and r.get('output_swf_content_sha256'):
+                verified=swf_content_sha256(output)==r['output_swf_content_sha256']
+            if not verified:
+                raise InstallError(f'Generated output checksum failed: {r["target"]}')
+            # The entire decompressed file matches the pinned release. Keep
+            # the actual byte hash for staging, apply, repeat runs and restore.
+            r['release_output_sha256']=r['output_sha256']
+            r['output_sha256']=sha(output)
+            r['compression_variant']=True
         path=safe(stage,r['target']);atomic(path,output)
         r.update(status='prepared',current_sha256=actual,staged_relative=r['target']);items.append(r)
         progress(f'{index}/{len(manifest["operations"])}  {Path(r["target"]).name}')
