@@ -1,15 +1,15 @@
 # Star Wars Genesis 한국어 패처
 
-**Star Wars Genesis 8.8.4용 Windows 한국어 패처 v0.2.6**입니다. 빌드 도구와 실제 Tkinter GUI 실행 검증을 개선했습니다.
+**Star Wars Genesis 8.8.4용 Windows 한국어 패처 v0.2.7**입니다. 정상 파일에서도 패치 생성이 중단되던 압축 환경 차이 오류를 수정했습니다.
 기존 SST 번역과 추가 번역 검토 결과를 반영하며, 사용자의 플러그인에서
 번역된 파일을 생성한 다음 백업하고 적용합니다. Python, Java, xTranslator,
 Gemini API 키를 별도로 설치하거나 입력할 필요가 없습니다.
 
-v0.2.6은 v0.2.5의 Genesis 8.8.4 번역과 업데이트 호환성 기능을 유지하면서 Windows 실행 파일의 Tcl/Tk 빌드·검증 경로를 수정했습니다. 이전 8.8.32용 v0.2.3의 [괄호 병기·캐릭터 배경 검수](translation-review/v0.2.3-release/README.md), [용어 검수·상호작용 수정](docs/terminology-complete-patch.md), [기존 한패 활용](docs/donor-reuse.md)을 바탕으로 합니다. 전체 퀘스트와 대사의 실제 플레이 검증은 완료되지 않았습니다.
+v0.2.7은 v0.2.6의 Tcl/Tk 실행 오류 수정을 유지하고, 플러그인·폰트·HUD의 압축 방식 차이로 발생하던 체크섬 불일치를 수정했습니다. 이전 8.8.32용 v0.2.3의 [괄호 병기·캐릭터 배경 검수](translation-review/v0.2.3-release/README.md), [용어 검수·상호작용 수정](docs/terminology-complete-patch.md), [기존 한패 활용](docs/donor-reuse.md)을 바탕으로 합니다. 전체 퀘스트와 대사의 실제 플레이 검증은 완료되지 않았습니다.
 
 ## 다운로드와 설치
 
-1. [v0.2.6 정식 릴리스](https://github.com/munument1/StarWars-Genesis-KR-Patcher/releases/tag/v0.2.6)에서 `GenesisKRPatcher-v0.2.6.zip`을 내려받아 압축을 풉니다. 릴리스 페이지가 없다면 배포 검증 중이므로 v0.2.5를 대신 설치하지 마세요.
+1. [v0.2.7 정식 릴리스](https://github.com/munument1/StarWars-Genesis-KR-Patcher/releases/tag/v0.2.7)에서 `GenesisKRPatcher-v0.2.7.zip`을 내려받아 압축을 풉니다. 이전 v0.2.5·v0.2.6 대신 수정판을 사용하세요. 모드 폴더명을 임의로 바꾸지 마세요.
 2. 실행 중인 Starfield를 완전히 종료합니다.
 3. `GenesisKRPatcher.exe`를 실행해 제네시스의 **Game 폴더**를 선택합니다.
    `mods`, `profiles`, `ModOrganizer.ini`가 들어 있는 폴더입니다.
@@ -40,7 +40,7 @@ v0.2.6은 v0.2.5의 Genesis 8.8.4 번역과 업데이트 호환성 기능을 유
 나머지 3,286건은 빈 문자열 640, 런타임 변수/태그 261, 기술용 식별자 1,511, 구조 재검증 후 원문 유지로 판정한 874건입니다.
 원문 불일치 때문에 잘못된 구번역을 강제 적용하지 않습니다. 따라서 8.8.4 대응은 **완역을 의미하지 않습니다.**
 874건은 `FACT`·`FLST` 등의 내부·콘솔용 이름과 숫자·원소 기호, 표시 참조 미확인 기술 문자열입니다. **이번에는 추가 번역하지 않고 그대로 보존합니다.** 자세한 수치와 보류 기준은 [8.8.4 Strings 번역 반영·검수 상태](docs/genesis-8.8.4-strings-status.md)를 참고하세요.
-v0.2.5의 Tcl/Tk 실행 오류를 수정한 **v0.2.6**입니다. 정식 릴리스는 Windows 빌드 및 EXE의 실제 Tkinter GUI 초기화 검사를 통과했을 때만 생성됩니다. 단, 전체 퀘스트를 끝까지 진행한 인게임 검수를 완료했다는 뜻은 아닙니다.
+v0.2.5의 Tcl/Tk 실행 오류와 v0.2.6의 패치 생성 체크섬 오류를 수정한 **v0.2.7**입니다. 정식 릴리스는 Windows 빌드 및 EXE의 실제 Tkinter GUI 초기화 검사를 통과했을 때만 생성됩니다. 단, 전체 퀘스트를 끝까지 진행한 인게임 검수를 완료했다는 뜻은 아닙니다.
 
 패처의 적용 대상은 **제네시스 `mods` 폴더와 Game 폴더의 BAT**입니다.
 Steam 본편 `Starfield/Data`는 버전 확인을 위해 읽기만 하며 수정하지 않습니다.
@@ -70,7 +70,7 @@ xTranslator와의 완전한 출력 대조, 모든 PEX 및 SWF 내부 문구 검�
 > 실제 후속 Genesis 버전에서 모든 모드나 인게임 동작을 검증했다는 뜻은 아닙니다.
 > 지원 범위와 안전장치는 [업데이트 호환성 패치 설계](docs/update-compatible-patching.md)를 참고하세요.
 
-Python 3.14에서 확인했습니다. 소스 실행에는 표준 라이브러리만 사용합니다.
+Python 3.13과 3.14에서 확인했습니다. 소스 실행에는 표준 라이브러리만 사용합니다.
 
 ```powershell
 python patcher_app.py
