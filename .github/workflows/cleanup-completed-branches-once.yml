@@ -1,0 +1,40 @@
+name: One-time verified branch cleanup (StarWars-Genesis-KR-Patcher)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cleanup-completed-branches-once.yml'
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    if: github.repository == 'munument1/StarWars-Genesis-KR-Patcher'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const items = [{"branch":"codex/nexus-release-sync","sha":"4c15672af16738e472461ecb295c3fc8a29e8c42","pr":2,"base":"main"},{"branch":"feature/genesis-8.8.4-rc","sha":"bec6a33464e42c629399634c0ae802455437d7d9","pr":3,"base":"main"},{"branch":"feature/update-tolerant-translations","sha":"89ccbeceb093e01adfd8e1df1675e05a0fb76259","pr":4,"base":"main"},{"branch":"fix/issue5-output-checksum","sha":"ad80f6e5c89c08013d7df7715758aa2817f1f594","pr":7,"base":"main"},{"branch":"fix/v026-tkinter-release-gates","sha":"8bb4624a743876c5fbc9cf1a9d40cdf9b0a054e1","pr":6,"base":"main"}];
+            const owner=context.repo.owner, repo=context.repo.repo;
+            if (owner!=='munument1'||repo!=="StarWars-Genesis-KR-Patcher"||context.ref!=='refs/heads/main') throw Error('Wrong repository/ref');
+            const openPRs=await github.paginate(github.rest.pulls.list,{owner,repo,state:'open',per_page:100});
+            const blocked=new Set(openPRs.flatMap(p=>[p.head.ref,p.base.ref]));
+            let deleted=0; const skipped=[];
+            for(const item of items){
+              if(item.branch==='main'||item.branch==='gh-pages'||blocked.has(item.branch)) {skipped.push(item.branch+': protected by policy/PR');continue;}
+              const b=(await github.rest.repos.getBranch({owner,repo,branch:item.branch})).data;
+              if(b.protected||b.commit.sha!==item.sha){skipped.push(item.branch+': ref changed/protected');continue;}
+              if(item.pr!==null){
+                const p=(await github.rest.pulls.get({owner,repo,pull_number:item.pr})).data;
+                if(!p.merged_at||p.head.ref!==item.branch||p.head.sha!==item.sha||p.base.ref!==item.base){skipped.push(item.branch+': PR altered');continue;}
+              }
+              if(item.base!=='main'){
+                const diff=(await github.rest.repos.compareCommitsWithBasehead({owner,repo,basehead:'main...'+item.branch})).data;
+                if(diff.ahead_by!==0){skipped.push(item.branch+': unique commits');continue;}
+              }
+              await github.rest.git.deleteRef({owner,repo,ref:'heads/'+item.branch});
+              deleted++;core.info('DELETED '+item.branch);
+            }
+            core.info('Branch cleanup: '+deleted+' deleted, '+skipped.length+' skipped from '+items.length+' candidates');
+            for(const note of skipped)core.warning('SKIPPED '+note);
+            await core.summary.addHeading('One-time branch cleanup').addRaw('Deleted '+deleted+' of '+items.length+'. Skipped '+skipped.length+'.').write();
