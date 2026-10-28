@@ -1,9 +1,6 @@
 name: Verify Windows GUI candidate
 
 on:
-  push:
-    branches:
-      - fix/issue5-output-checksum
   pull_request:
     branches:
       - main
