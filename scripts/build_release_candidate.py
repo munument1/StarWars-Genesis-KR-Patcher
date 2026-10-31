@@ -23,7 +23,15 @@ def main():
         raise SystemExit("Release candidate EXE must be built and tested on Windows")
 
     from PyInstaller.utils.hooks.tcl_tk import tcltk_info
-    if not tcltk_info.available or tcltk_info.tcl_data_missing or tcltk_info.tk_data_missing:
+    # PyInstaller 6.20 reports data directories but no longer exposes the
+    # legacy `*_data_missing` attributes that some older versions offered.
+    tcl_missing = getattr(tcltk_info, "tcl_data_missing", None)
+    tk_missing = getattr(tcltk_info, "tk_data_missing", None)
+    if tcl_missing is None:
+        tcl_missing = not Path(getattr(tcltk_info, "tcl_data_dir", "") or ".").is_dir()
+    if tk_missing is None:
+        tk_missing = not Path(getattr(tcltk_info, "tk_data_dir", "") or ".").is_dir()
+    if not tcltk_info.available or tcl_missing or tk_missing:
         raise RuntimeError("Build Python Tcl/Tk is unavailable or its data files are missing")
 
     run(sys.executable, "-m", "unittest", "discover", "-p", "test_*.py", "-q")
@@ -35,10 +43,16 @@ def main():
         run(sys.executable, "patcher_app.py", "--self-check", source_check)
 
         manifest = json.loads((ROOT / "installer-data" / "manifest.json").read_text(encoding="utf-8"))
-        if manifest.get("version") != "0.2.7" or manifest.get("target_version") != "8.8.4":
-            raise RuntimeError("Unexpected v0.2.7 manifest metadata")
-        if manifest.get("release_state") != "RELEASE" or len(manifest.get("operations", [])) != 183:
-            raise RuntimeError("Invalid expected v0.2.7 translation payload")
+        if manifest.get("version") != "0.2.8" or manifest.get("target_version") != "8.8.41":
+            raise RuntimeError("Unexpected Genesis 8.8.41/v0.2.8 manifest metadata")
+        if manifest.get("release_state") != "RELEASE_CANDIDATE" or len(manifest.get("operations", [])) != 183:
+            raise RuntimeError("Invalid expected v0.2.8 release candidate payload")
+        if manifest.get("in_game_verified") is not False:
+            raise RuntimeError("Release candidate must not claim in-game verification")
+        targets = {item["target"]: item for item in manifest["operations"]}
+        hud = targets.get("mods/Star Wars - HUD Overhaul/interface/playerhudcomponents.gfx")
+        if hud is None or hud["kind"] != "hud_recipe_v2":
+            raise RuntimeError("Genesis 8.8.41 HUD patch is missing")
         output_version = "v" + manifest["version"]
 
         run(sys.executable, "-m", "PyInstaller", "--clean", "--noconfirm", "--onefile",
@@ -76,7 +90,7 @@ def main():
         (ROOT / ("SHA256SUMS-" + output_version + ".txt")).write_text(
             digest + "  " + output.name + "\n", encoding="ascii"
         )
-        print("v0.2.7 candidate verified: payload, frozen Tcl/Tk GUI, ZIP, SHA-256")
+        print("v0.2.8 RC verified: payload, frozen Tcl/Tk GUI, ZIP, SHA-256")
 
 
 if __name__ == "__main__":

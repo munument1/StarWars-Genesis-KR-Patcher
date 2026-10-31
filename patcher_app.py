@@ -5,8 +5,8 @@ import tkinter as tk
 from tkinter import filedialog,messagebox,ttk
 from installer_backend import generate,apply,restore,sha,safe
 
-PATCHER_VERSION='0.2.7'
-GENESIS_VERSION='8.8.4'
+PATCHER_VERSION='0.2.8'
+GENESIS_VERSION='8.8.41'
 
 def package_dir():
     return Path(getattr(sys,'_MEIPASS',Path(__file__).parent))/'installer-data'

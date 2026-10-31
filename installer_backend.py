@@ -5,6 +5,7 @@ from patch_engine import patch_plugin,patch_strings,plugin_content_sha256
 from plugin_anchors import remap_translations
 from preserve_font_resources import patch_font_bytes,swf_content_sha256
 from hud_layout import patch_hud
+from hud_recipe_v2 import apply_hud_recipe_v2
 
 class InstallError(ValueError):pass
 def sha(raw):return hashlib.sha256(raw).hexdigest()
@@ -157,6 +158,9 @@ def generate(game,package,stage,profile=None,progress=lambda text:None):
             values=json.loads(gzip.decompress(blob));additions={int(fid):{int(c):{k:base64.b64decode(v) for k,v in g.items()} for c,g in glyphs.items()} for fid,glyphs in values.items()}
             output,_=patch_font_bytes(current,additions)
         elif r['kind']=='hud_recipe':output=patch_hud(current,json.loads(gzip.decompress(blob)))
+        elif r['kind']=='hud_recipe_v2':
+            output=apply_hud_recipe_v2(current,json.loads(gzip.decompress(blob)),
+                                       lambda digest:safe(package,'blobs/'+digest).read_bytes())
         else:output=blob
         if compatible:
             r['release_output_sha256']=r['output_sha256']
@@ -165,7 +169,7 @@ def generate(game,package,stage,profile=None,progress=lambda text:None):
             verified=False
             if r['kind']=='text_recipe' and recipe['kind']=='plugin' and r.get('output_plugin_content_sha256'):
                 verified=plugin_content_sha256(output)==r['output_plugin_content_sha256']
-            elif r['kind'] in ('font_recipe','hud_recipe') and r.get('output_swf_content_sha256'):
+            elif r['kind'] in ('font_recipe','hud_recipe','hud_recipe_v2') and r.get('output_swf_content_sha256'):
                 verified=swf_content_sha256(output)==r['output_swf_content_sha256']
             if not verified:
                 raise InstallError(f'Generated output checksum failed: {r["target"]}')
