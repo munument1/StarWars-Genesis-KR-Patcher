@@ -42,11 +42,18 @@ jobs:
         run: |
           python scripts/build_release_candidate.py
           if ($LASTEXITCODE -ne 0) { throw "Windows EXE release candidate validation FAILED" }
+      - name: Read verified candidate version
+        id: candidate
+        shell: pwsh
+        run: |
+          $version = (Get-Content installer-data/manifest.json -Raw -Encoding UTF8 | ConvertFrom-Json).version
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid candidate version" }
+          "version=$version" >> $env:GITHUB_OUTPUT
       - name: Upload *unpublished* verified Windows candidate
         uses: actions/upload-artifact@v4
         with:
-          name: v0.2.7-windows-candidate
+          name: v${{ steps.candidate.outputs.version }}-windows-candidate
           path: |
-            GenesisKRPatcher-v0.2.7.zip
-            SHA256SUMS-v0.2.7.txt
+            GenesisKRPatcher-v${{ steps.candidate.outputs.version }}.zip
+            SHA256SUMS-v${{ steps.candidate.outputs.version }}.txt
           if-no-files-found: error
