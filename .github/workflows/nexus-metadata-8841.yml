@@ -1,4 +1,4 @@
-name: Sync Genesis 8.8.41 Nexus mod description
+name: Restore Nexus BBCode description for Genesis 8.8.41
 
 on:
   workflow_dispatch:
@@ -16,13 +16,16 @@ jobs:
   sync-description:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify published Nexus file and update mod description
+      - name: Checkout version-controlled description
+        uses: actions/checkout@v4
+      - name: Restore Nexus-compatible formatted description
         uses: actions/github-script@v7
         env:
           NEXUS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
           DRY_RUN: ${{ inputs.dry_run }}
         with:
           script: |
+            const fs = require('fs');
             const key = process.env.NEXUS_API_KEY;
             if (!key) throw new Error('Nexus API key missing');
             core.setSecret(key);
@@ -54,43 +57,43 @@ jobs:
             const good = versions.filter(v => v.version === '8.8.41-KR0.2.8' && v.category === 'main');
             if (good.length !== 1) throw new Error('Latest 8.8.41 file version is not uniquely active/main; refuse metadata edit');
 
-            const summary = 'Star Wars Genesis 8.8.41 한국어 패처 v0.2.8. 모드·퀘스트·UI·HUD 번역, 한글 폰트, 자동 백업 및 복원 지원.';
-            const description = [
-              '<h2>Star Wars Genesis 8.8.41 | Korean Translation Patcher v0.2.8</h2>',
-              '<p>Star Wars Genesis 8.8.41(8.8.4.1) 전용 비공식 한국어 번역 패처 정식판입니다.</p>',
-              '<p><strong>지원 Genesis 버전: 8.8.41</strong><br><strong>한국어 패처 버전: v0.2.8</strong></p>',
-              '<h3>주요 기능</h3>',
-              '<ul><li>Genesis 대사·퀘스트·아이템·장비 및 ESM/STRINGS 인터페이스 문자열 번역</li>',
-              '<li>8.8.41 변경 문자열 후보 190개 중 187개 한국어 대응</li>',
-              '<li>새 HUD 한글 글리프 11,225자 보강, 원형 HUD 글자 크기 및 간격 보정</li>',
-              '<li>번역 생성, 원본 해시 검사, 안전한 자동 백업·복원</li></ul>',
-              '<h3>설치 방법</h3>',
-              '<ol><li>Genesis 8.8.41 설치를 완료하고 Starfield를 종료합니다.</li>',
-              '<li>GenesisKRPatcher-v0.2.8.zip을 내려받아 압축을 풉니다.</li>',
-              '<li>GenesisKRPatcher.exe를 실행해 mods/profiles/ModOrganizer.ini가 있는 Genesis Game 폴더를 선택합니다.</li>',
-              '<li>검사하고 패치 생성 → 백업 후 적용을 순서대로 실행합니다.</li>',
-              '<li>MO2에서 SFSE로 게임을 실행하며, Starfield 게임 언어는 English로 설정합니다.</li></ol>',
-              '<h3>검증</h3>',
-              '<p>실제 Genesis 8.8.41 파일로 183개 패치 작업 생성·격리 적용·복원 검사 및 Windows EXE 테스트를 통과했습니다. 사용자 실게임 확인에서 새 HUD 한글이 정상 출력되고 글자가 잘리지 않습니다. 모든 퀘스트와 대사의 전수 플레이 검증을 의미하지는 않습니다.</p>',
-              '<h3>프로젝트 및 안내</h3>',
-              '<p><a href="https://munument1.github.io/-KR-Starwars-Genesis/">Genesis 한국어 설치 가이드</a><br>',
-              '<a href="https://github.com/munument1/StarWars-Genesis-KR-Patcher/releases/tag/v0.2.8">GitHub v0.2.8 정식 릴리스</a><br>',
-              '<a href="https://github.com/munument1/StarWars-Genesis-KR-Patcher/issues">오류 및 번역 제보</a></p>',
-              '<p>원본 Star Wars Genesis는 별도 설치해야 하며, 해당 프로젝트와 공식 제휴 관계가 없는 커뮤니티 번역입니다.</p>'
-            ].join('');
+            const summary = 'Star Wars Genesis - Korean Translation 한국어 번역입니다.';
+            const description = fs.readFileSync('docs/nexus/description-ko-8841.bbcode.txt', 'utf8').trim();
+            const sectionNames = ['■ 소개', '■ 설치 방법', '■ 주요 기능', '■ 요구 사항', '■ 감사의 말'];
+            for (const title of sectionNames) {
+              if (!description.includes(title)) throw new Error('Nexus section missing: ' + title);
+            }
+            if (description.length < 3000 || description.includes('<h2>') ||
+                description.includes('<p>') || description.includes('<ul>')) {
+              throw new Error('Unsafe or HTML-based Nexus description (expected BBCode)');
+            }
+            for (const tag of ['b', 'size', 'center', 'list', 'url']) {
+              const opens = (description.match(new RegExp('\\[' + tag + '(?:=|\\])', 'g')) || []).length;
+              const closes = (description.match(new RegExp('\\[/' + tag + '\\]', 'g')) || []).length;
+              if (opens !== closes) throw new Error('Unbalanced BBCode ' + tag);
+            }
+            // Read and validate the current description before changing anything:
+            // do not overwrite independent edits by the Nexus author.
+            const before = await req(`/v3/mods/${mod.uid}`);
+            const current = before.data;
+            if (!current || typeof current.description !== 'string') throw new Error('Nexus description is unavailable');
+            if (!current.description.startsWith('<h2>Star Wars Genesis 8.8.41 | Korean Translation Patcher v0.2.8')) {
+              throw new Error('Current description differs from the known broken HTML; refuse to replace it');
+            }
             core.info(JSON.stringify({
               mod_uid: mod.uid,
               current_mod_version: mod.version,
               newest_file_version: good[0].version,
-              old_description_length: String(mod.description || '').length,
+              old_description_length: current.description.length,
               new_description_length: description.length,
               dry_run: process.env.DRY_RUN
             }));
             if (process.env.DRY_RUN === 'true') return;
             await req(`/v3/mods/${mod.uid}`, 'PATCH', { summary, description });
             const updated = (await req(`/v3/mods/${mod.uid}`)).data;
-            if (!String(updated.description || '').includes('8.8.41')) {
-              throw new Error('Nexus did not confirm updated description content');
+            if (!String(updated.description || '').startsWith('[center]') ||
+                !String(updated.description || '').includes('■ 감사의 말') ||
+                String(updated.summary || '') !== summary) {
+              throw new Error('Nexus did not confirm complete BBCode restore');
             }
-            core.info('Nexus v3 description updated and verified; newest MAIN file version remains 8.8.41-KR0.2.8');
-            core.info('Note: legacy v1 top-level mod.version may lag and has no documented PATCH field.');
+            core.info('Restored Korean Nexus BBCode sections and original summary, API verified');
