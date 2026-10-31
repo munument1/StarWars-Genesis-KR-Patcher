@@ -7,7 +7,7 @@ on:
         description: 'Verified release tag'
         type: string
         required: true
-        default: v0.2.7
+        default: v0.2.8
       dry_run:
         description: 'Verify release and package without uploading'
         type: boolean
@@ -33,7 +33,7 @@ jobs:
         id: release
         uses: actions/github-script@v7
         env:
-          REQUESTED_TAG: ${{ inputs.tag || 'v0.2.7' }}
+          REQUESTED_TAG: ${{ inputs.tag || 'v0.2.8' }}
         with:
           script: |
             const repo = context.repo;
@@ -53,8 +53,8 @@ jobs:
               core.setFailed('Expected a numeric version tag such as v1.2.3.');
               return;
             }
-            if (release.tag_name !== 'v0.2.7') {
-              core.notice('This workflow publishes only the verified Genesis 8.8.4 patcher v0.2.7.');
+            if (release.tag_name !== 'v0.2.8') {
+              core.setFailed('This workflow publishes only the Genesis 8.8.41 patcher v0.2.8.');
               return;
             }
             const assetName = `GenesisKRPatcher-${release.tag_name}.zip`;
@@ -80,7 +80,7 @@ jobs:
             core.setOutput('tag', release.tag_name);
             core.setOutput('asset', assetName);
             core.setOutput('checksums', checksumsName);
-            core.setOutput('version', '8.8.4-KR' + release.tag_name.replace(/^v/, ''));
+            core.setOutput('version', '8.8.41-KR' + release.tag_name.replace(/^v/, ''));
             core.setOutput('url', release.html_url);
 
       - name: Download release assets

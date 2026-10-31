@@ -45,8 +45,8 @@ def main():
         manifest = json.loads((ROOT / "installer-data" / "manifest.json").read_text(encoding="utf-8"))
         if manifest.get("version") != "0.2.8" or manifest.get("target_version") != "8.8.41":
             raise RuntimeError("Unexpected Genesis 8.8.41/v0.2.8 manifest metadata")
-        if manifest.get("release_state") != "RELEASE_CANDIDATE" or len(manifest.get("operations", [])) != 183:
-            raise RuntimeError("Invalid expected v0.2.8 release candidate payload")
+        if manifest.get("release_state") != "RELEASE" or len(manifest.get("operations", [])) != 183:
+            raise RuntimeError("Invalid expected v0.2.8 production release payload")
         if manifest.get("in_game_verified") is not False:
             raise RuntimeError("Release candidate must not claim in-game verification")
         targets = {item["target"]: item for item in manifest["operations"]}
